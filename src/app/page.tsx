@@ -1,16 +1,109 @@
+'use client'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import PredioCarousel from '@/components/PredioCarousel'
+import { getMatches, getTopScorers } from '@/lib/supabase'
+import type { Match, TopScorer } from '@/lib/types'
 
 const WA_URL = 'https://wa.me/5491134290431'
+const TOURNAMENT_ID = '11111111-1111-1111-1111-111111111111'
 
-const STATS = [
-  { value: '24', label: 'Equipos' },
-  { value: '3', label: 'Zonas' },
-  { value: '72', label: 'Partidos' },
-]
+function LastResults({ matches }: { matches: Match[] }) {
+  // Get last 3 finished matches
+  const finished = matches
+    .filter(m => m.status === 'finished')
+    .sort((a, b) => b.round - a.round)
+    .slice(0, 3)
+
+  if (finished.length === 0) return null
+
+  return (
+    <div style={{ padding: '20px 16px 0' }}>
+      <p style={{ margin: '0 0 10px', fontSize: 9, fontWeight: 800, letterSpacing: '.25em', textTransform: 'uppercase', color: 'var(--ce-cyan)' }}>
+        Últimos resultados
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {finished.map((m) => (
+          <div key={m.id} className="glass" style={{ borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center' }}>
+            <div style={{ flex: 1, textAlign: 'right', paddingRight: 10 }}>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: m.home_score > m.away_score ? 'var(--ce-cyan)' : 'var(--ce-fg)' }}>{m.home_team?.name}</p>
+            </div>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: '4px 10px',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}>
+              <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--ce-fg)', minWidth: 18, textAlign: 'center' }}>{m.home_score}</span>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)' }}>—</span>
+              <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--ce-fg)', minWidth: 18, textAlign: 'center' }}>{m.away_score}</span>
+            </div>
+            <div style={{ flex: 1, textAlign: 'left', paddingLeft: 10 }}>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: m.away_score > m.home_score ? '#f5c518' : 'var(--ce-fg)' }}>{m.away_team?.name}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Link href="/fixture" style={{
+        display: 'block', textAlign: 'center', marginTop: 10,
+        fontSize: 11, fontWeight: 800, color: 'var(--ce-cyan)', textDecoration: 'none',
+        letterSpacing: '.06em',
+      }}>
+        Ver fixture completo →
+      </Link>
+    </div>
+  )
+}
+
+function TopScorerWidget({ scorer }: { scorer: TopScorer | null }) {
+  if (!scorer) return null
+  return (
+    <div className="glass" style={{ borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, borderLeft: '2px solid var(--ce-cyan)' }}>
+      <span style={{ fontSize: 28 }}>⚽</span>
+      <div style={{ flex: 1 }}>
+        <p style={{ margin: 0, fontSize: 9, fontWeight: 800, letterSpacing: '.15em', textTransform: 'uppercase', color: 'var(--ce-fg-4)' }}>Goleador del torneo</p>
+        <p style={{ margin: '2px 0 0', fontSize: 15, fontWeight: 900, color: 'var(--ce-fg)' }}>{scorer.player_name}</p>
+        <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--ce-fg-4)' }}>{scorer.team_name}</p>
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <p style={{ margin: 0, fontSize: 28, fontWeight: 900, color: 'var(--ce-cyan)', textShadow: '0 0 12px rgba(0,240,255,.5)', lineHeight: 1 }}>{scorer.goals}</p>
+        <p style={{ margin: '2px 0 0', fontSize: 8, fontWeight: 800, letterSpacing: '.15em', textTransform: 'uppercase', color: 'var(--ce-fg-4)' }}>goles</p>
+      </div>
+    </div>
+  )
+}
+
+function DynamicStats({ matches }: { matches: Match[] }) {
+  const finished = matches.filter(m => m.status === 'finished')
+  const totalGoals = finished.reduce((sum, m) => sum + m.home_score + m.away_score, 0)
+  const currentRound = finished.length > 0 ? Math.max(...finished.map(m => m.round)) : 0
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 1, margin: '0 16px', background: 'var(--ce-border)', borderRadius: 14, overflow: 'hidden' }}>
+      {[
+        { value: '24', label: 'Equipos' },
+        { value: '3', label: 'Zonas' },
+        { value: String(finished.length), label: 'Jugados' },
+        { value: String(totalGoals), label: 'Goles' },
+      ].map(s => (
+        <div key={s.label} className="glass" style={{ padding: '14px 6px', textAlign: 'center', borderRadius: 0, border: 'none' }}>
+          <p style={{ margin: 0, fontSize: 24, fontWeight: 900, color: 'var(--ce-cyan)', textShadow: '0 0 14px rgba(0,240,255,.5)', lineHeight: 1 }}>{s.value}</p>
+          <p style={{ margin: '4px 0 0', fontSize: 8, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ce-fg-4)' }}>{s.label}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export default function HomePage() {
+  const [matches, setMatches] = useState<Match[]>([])
+  const [topScorer, setTopScorer] = useState<TopScorer | null>(null)
+
+  useEffect(() => {
+    getMatches(TOURNAMENT_ID).then(d => setMatches(d as Match[]))
+    getTopScorers(TOURNAMENT_ID).then(s => { if (s.length > 0) setTopScorer(s[0]) })
+  }, [])
+
   return (
     <main style={{ paddingBottom: 32 }}>
       {/* Hero */}
@@ -38,15 +131,16 @@ export default function HomePage() {
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to bottom, transparent, var(--ce-bg))' }} />
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, margin: '0 16px', background: 'var(--ce-border)', borderRadius: 14, overflow: 'hidden' }}>
-        {STATS.map(s => (
-          <div key={s.label} className="glass" style={{ padding: '16px 8px', textAlign: 'center', borderRadius: 0, border: 'none' }}>
-            <p style={{ margin: 0, fontSize: 28, fontWeight: 900, color: 'var(--ce-cyan)', textShadow: '0 0 14px rgba(0,240,255,.5)', lineHeight: 1 }}>{s.value}</p>
-            <p style={{ margin: '4px 0 0', fontSize: 9, fontWeight: 800, letterSpacing: '.15em', textTransform: 'uppercase', color: 'var(--ce-fg-4)' }}>{s.label}</p>
-          </div>
-        ))}
+      {/* Dynamic Stats */}
+      <DynamicStats matches={matches} />
+
+      {/* Goleador del torneo */}
+      <div style={{ padding: '20px 16px 0' }}>
+        <TopScorerWidget scorer={topScorer} />
       </div>
+
+      {/* Últimos resultados */}
+      <LastResults matches={matches} />
 
       {/* Sobre el torneo */}
       <div style={{ padding: '24px 16px 0' }}>
@@ -115,6 +209,21 @@ export default function HomePage() {
             <p style={{ margin: 0, fontSize: 10, color: 'var(--ce-fg-4)' }}>Conducta deportiva</p>
           </Link>
         </div>
+      </div>
+
+      {/* Admin link (discreto) */}
+      <div style={{ padding: '16px 16px 0' }}>
+        <Link href="/panel-admin" className="tap glass" style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          borderRadius: 12, padding: '12px 14px', textDecoration: 'none',
+          border: '1px solid rgba(255,255,255,.06)',
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ce-fg-4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ce-fg-4)', letterSpacing: '.06em' }}>Panel de Administración</span>
+        </Link>
       </div>
 
       {/* WhatsApp Organización */}

@@ -202,6 +202,32 @@ export async function getTopScorers(tournamentId: string, zone?: string): Promis
   return Object.values(counts).sort((a, b) => b.goals - a.goals)
 }
 
+// --- Team Matches ---
+export async function getTeamMatches(teamId: string) {
+  const { data, error } = await supabase
+    .from('matches')
+    .select(`
+      *,
+      home_team:teams!matches_home_team_id_fkey(id, name, zone, logo_url),
+      away_team:teams!matches_away_team_id_fkey(id, name, zone, logo_url)
+    `)
+    .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
+    .order('round', { ascending: true })
+  if (error) throw error
+  return data ?? []
+}
+
+// --- Team by ID ---
+export async function getTeamById(teamId: string) {
+  const { data, error } = await supabase
+    .from('teams')
+    .select('*')
+    .eq('id', teamId)
+    .single()
+  if (error) return null
+  return data
+}
+
 // --- Fair Play ---
 export async function getFairPlay(tournamentId: string): Promise<FairPlayEntry[]> {
   const { data, error } = await supabase

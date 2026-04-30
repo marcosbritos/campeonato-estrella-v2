@@ -158,6 +158,7 @@ export default function FixtureScroll() {
   const [zone, setZone] = useState<ZoneFilter>('Todos')
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeRound, setActiveRound] = useState<number | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -170,6 +171,25 @@ export default function FixtureScroll() {
   }, [zone])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    if (matches.length > 0) {
+      const g = groupByRound(matches)
+      const r = Object.keys(g).map(Number).sort((a, b) => a - b)
+      
+      setActiveRound(current => {
+        if (current !== null && r.includes(current)) return current
+        
+        // Find latest round with finished matches
+        const latestFinished = r.slice().reverse().find(rnd => 
+          g[rnd].some(m => m.status === 'finished')
+        )
+        return latestFinished ?? r[0]
+      })
+    } else {
+      setActiveRound(null)
+    }
+  }, [matches])
 
   const grouped = groupByRound(matches)
   const rounds = Object.keys(grouped).map(Number).sort((a, b) => a - b)
@@ -210,6 +230,41 @@ export default function FixtureScroll() {
         })}
       </div>
 
+      {/* Round filter pills */}
+      {rounds.length > 0 && (
+        <div
+          className="no-scrollbar"
+          style={{ display: 'flex', gap: 8, padding: '12px 16px', overflowX: 'auto', borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+        >
+          {rounds.map((r) => {
+            const active = activeRound === r
+            return (
+              <button
+                key={r}
+                onClick={() => setActiveRound(r)}
+                style={{
+                  flexShrink: 0, padding: '6px 16px', borderRadius: 100,
+                  border: 'none', cursor: 'pointer',
+                  fontFamily: 'var(--font-bebas, system-ui)',
+                  fontSize: 12, letterSpacing: '0.1em',
+                  transition: 'all 0.2s ease',
+                  ...(active ? {
+                    background: 'rgba(255,255,255,0.9)',
+                    color: '#000000',
+                  } : {
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'rgba(255,255,255,0.4)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                  }),
+                }}
+              >
+                FECHA {r}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* Content */}
       <div style={{ paddingTop: 16, paddingBottom: 8 }}>
         {loading ? (
@@ -226,28 +281,26 @@ export default function FixtureScroll() {
             <div style={{ fontSize: 36, marginBottom: 8 }}>📅</div>
             <p style={{ fontSize: 13 }}>No hay partidos cargados aún</p>
           </div>
-        ) : (
-          rounds.map((round) => (
-            <div key={round}>
-              {/* Round separator */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 20px 12px' }}>
-                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.05)' }} />
-                <span style={{
-                  fontSize: 10, fontWeight: 900, letterSpacing: '0.2em',
-                  color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase',
-                  fontFamily: 'var(--font-bebas, system-ui)',
-                }}>
-                  FECHA {round}
-                </span>
-                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.05)' }} />
-              </div>
-
-              {grouped[round].map((m, i) => (
-                <MatchCard key={m.id} match={m} index={i} />
-              ))}
+        ) : activeRound !== null && grouped[activeRound] ? (
+          <div>
+            {/* Round separator */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 20px 12px' }}>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.05)' }} />
+              <span style={{
+                fontSize: 10, fontWeight: 900, letterSpacing: '0.2em',
+                color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase',
+                fontFamily: 'var(--font-bebas, system-ui)',
+              }}>
+                FECHA {activeRound}
+              </span>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.05)' }} />
             </div>
-          ))
-        )}
+
+            {grouped[activeRound].map((m, i) => (
+              <MatchCard key={m.id} match={m} index={i} />
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <style>{`

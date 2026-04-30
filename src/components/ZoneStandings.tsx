@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase, getStandings } from '@/lib/supabase'
 import type { Standing } from '@/lib/types'
 
@@ -13,17 +14,20 @@ const POS_STYLE: Record<number, { color: string; shadow: string; label: string }
 }
 
 function TeamRow({ s, pos, delay }: { s: Standing; pos: number; delay: number }) {
+  const router = useRouter()
   const posStyle = POS_STYLE[pos]
   const isTop3 = pos <= 3
   const isClassified = pos <= 2
 
   return (
     <tr
-      className="team-row"
+      className="team-row tap"
+      onClick={() => router.push(`/equipo/${s.team_id}`)}
       style={{
         borderBottom: '1px solid rgba(255,255,255,0.04)',
         animationDelay: `${delay}ms`,
         borderLeft: isClassified ? '2px solid rgba(0,240,255,0.3)' : '2px solid transparent',
+        cursor: 'pointer',
       }}
     >
       {/* # */}
