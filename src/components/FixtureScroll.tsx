@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { getMatches } from '@/lib/supabase'
+const TOURNAMENT_ID = '11111111-1111-1111-1111-111111111111'
+
 import type { Match } from '@/lib/types'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -163,7 +165,7 @@ export default function FixtureScroll() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await getMatches(zone === 'Todos' ? undefined : zone)
+      const data = await getMatches(TOURNAMENT_ID, zone === 'Todos' ? undefined : zone)
       setMatches(data as Match[])
     } finally {
       setLoading(false)

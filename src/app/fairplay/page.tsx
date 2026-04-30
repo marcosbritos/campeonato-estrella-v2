@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Header from '@/components/Header'
 import { getFairPlay } from '@/lib/supabase'
 import type { FairPlayEntry } from '@/lib/types'
+import Link from 'next/link'
 
 const SANCTIONS = [
   { rule: '3 tarjetas amarillas', sanction: '1 fecha de suspensión', icon: '🟨' },
@@ -90,7 +91,9 @@ export default function FairPlayPage() {
                               borderLeft: i < 3 ? '2px solid rgba(0,255,157,.4)' : '2px solid transparent',
                             }}>
                               <td style={{ padding: '12px 8px', textAlign: 'center', fontSize: 12, fontWeight: 900, color: i < 3 ? 'var(--ce-win)' : 'var(--ce-fg-4)' }}>{i + 1}</td>
-                              <td style={{ padding: '12px 8px', fontSize: 12, fontWeight: 700, color: 'var(--ce-fg)' }}>{row.name}</td>
+                              <td style={{ padding: '12px 8px', fontSize: 12, fontWeight: 700 }}>
+                                <Link href={`/equipo/${row.team_id}`} style={{ color: 'var(--ce-fg)', textDecoration: 'none' }}>{row.name}</Link>
+                              </td>
                               <td style={{ padding: '12px 8px', textAlign: 'center' }}>
                                 <span style={{ fontSize: 9, fontWeight: 900, padding: '2px 6px', borderRadius: 4, background: 'rgba(0,240,255,.08)', color: 'var(--ce-cyan)', border: '1px solid rgba(0,240,255,.18)' }}>{row.zone}</span>
                               </td>

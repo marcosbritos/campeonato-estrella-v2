@@ -70,11 +70,6 @@ function TeamRow({ s, pos, delay }: { s: Standing; pos: number; delay: number })
             }}>
               {s.name}
             </p>
-            {s.top_scorer && (
-              <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', lineHeight: 1, marginTop: 2 }}>
-                ⚽ {s.top_scorer}
-              </p>
-            )}
           </div>
         </div>
       </td>

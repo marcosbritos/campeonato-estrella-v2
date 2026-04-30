@@ -5,6 +5,7 @@ import { supabase, getStandings, getMatches, getTopScorers } from '@/lib/supabas
 import type { Standing, Match, TopScorer, Zone } from '@/lib/types'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import Link from 'next/link'
 
 const TOURNAMENT_ID = '11111111-1111-1111-1111-111111111111'
 const ZONES: Zone[] = ['A', 'B', 'C']
@@ -35,7 +36,7 @@ function StandingRow({ s, pos }: { s: Standing; pos: number }) {
             background: isTop3 ? 'rgba(0,240,255,.1)' : 'var(--ce-bg-3)',
             border: isTop3 ? '1px solid rgba(0,240,255,.25)' : '1px solid var(--ce-border)',
           }}>{initials}</div>
-          <p style={{ margin: 0, fontSize: 12, fontWeight: isTop3 ? 900 : 600, color: isTop3 ? 'var(--ce-fg)' : 'var(--ce-fg-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 110 }}>{s.name}</p>
+          <Link href={`/equipo/${s.team_id}`} style={{ margin: 0, fontSize: 12, fontWeight: isTop3 ? 900 : 600, color: isTop3 ? 'var(--ce-fg)' : 'var(--ce-fg-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 110, textDecoration: 'none' }}>{s.name}</Link>
         </div>
       </td>
       <td style={{ padding: '9px 4px', textAlign: 'center', width: 36 }}>
@@ -282,7 +283,9 @@ export default function PosicionesPage() {
                     {generalStandings.map((s, i) => (
                       <tr key={s.team_id} style={{ borderBottom: '1px solid var(--ce-divider)', borderLeft: i < 6 ? '2px solid rgba(0,240,255,.25)' : '2px solid transparent' }}>
                         <td style={{ width: 36, padding: '9px 4px 9px 10px', textAlign: 'center', fontSize: 12, fontWeight: 900, color: i < 6 ? 'var(--ce-cyan)' : 'var(--ce-fg-4)' }}>{i + 1}</td>
-                        <td style={{ padding: '7px 6px', fontSize: 12, fontWeight: 700, color: 'var(--ce-fg)', whiteSpace: 'nowrap', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</td>
+                        <td style={{ padding: '7px 6px', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <Link href={`/equipo/${s.team_id}`} style={{ color: 'var(--ce-fg)', textDecoration: 'none' }}>{s.name}</Link>
+                        </td>
                         <td style={{ padding: '9px 4px', textAlign: 'center', width: 32 }}>
                           <span style={{ fontSize: 9, fontWeight: 900, padding: '2px 6px', borderRadius: 4, background: 'rgba(0,240,255,.1)', color: 'var(--ce-cyan)', border: '1px solid rgba(0,240,255,.2)' }}>{s.zone}</span>
                         </td>
