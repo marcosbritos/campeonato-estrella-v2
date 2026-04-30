@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import type { Standing, TopScorer, FairPlayEntry } from './types'
+import type { Standing, TopScorer, FairPlayEntry, Player, MatchRoster } from './types'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co'
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'placeholder'
@@ -12,9 +12,16 @@ export const isConfigured =
   !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
   process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co'
 
+// --- Auth / Profiles ---
+export async function getProfile(userId: string) {
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+  if (error) return null
+  return data
+}
+
 // --- Standings ---
-export async function getStandings(zone?: string): Promise<Standing[]> {
-  let q = supabase.from('standings').select('*')
+export async function getStandings(tournamentId: string, zone?: string): Promise<Standing[]> {
+  let q = supabase.from('standings').select('*').eq('tournament_id', tournamentId)
   if (zone) q = q.eq('zone', zone)
   const { data, error } = await q.order('points', { ascending: false })
   if (error) throw error
@@ -22,7 +29,7 @@ export async function getStandings(zone?: string): Promise<Standing[]> {
 }
 
 // --- Matches ---
-export async function getMatches(zone?: string, round?: number) {
+export async function getMatches(tournamentId: string, zone?: string, round?: number) {
   let q = supabase
     .from('matches')
     .select(`
@@ -30,6 +37,7 @@ export async function getMatches(zone?: string, round?: number) {
       home_team:teams!matches_home_team_id_fkey(id, name, zone, logo_url),
       away_team:teams!matches_away_team_id_fkey(id, name, zone, logo_url)
     `)
+    .eq('tournament_id', tournamentId)
   if (zone) q = q.eq('zone', zone)
   if (round) q = q.eq('round', round)
   const { data, error } = await q.order('match_date', { ascending: true })
@@ -37,7 +45,7 @@ export async function getMatches(zone?: string, round?: number) {
   return data ?? []
 }
 
-export async function getLiveMatches() {
+export async function getLiveMatches(tournamentId: string) {
   const { data, error } = await supabase
     .from('matches')
     .select(`
@@ -45,6 +53,7 @@ export async function getLiveMatches() {
       home_team:teams!matches_home_team_id_fkey(id, name, zone, logo_url),
       away_team:teams!matches_away_team_id_fkey(id, name, zone, logo_url)
     `)
+    .eq('tournament_id', tournamentId)
     .eq('status', 'live')
   if (error) throw error
   return data ?? []
@@ -54,26 +63,60 @@ export async function updateMatchStatus(
   matchId: string,
   status: string,
   homeScore: number,
-  awayScore: number
+  awayScore: number,
+  observations?: string
 ) {
+  const payload: any = { status, home_score: homeScore, away_score: awayScore }
+  if (observations !== undefined) payload.observations = observations
   const { error } = await supabase
     .from('matches')
-    .update({ status, home_score: homeScore, away_score: awayScore })
+    .update(payload)
     .eq('id', matchId)
   if (error) throw error
 }
+
+// --- Rosters ---
+export async function getMatchRoster(matchId: string, teamId: string): Promise<MatchRoster[]> {
+  const { data, error } = await supabase
+    .from('match_rosters')
+    .select(`*, player:players(*)`)
+    .eq('match_id', matchId)
+    .eq('team_id', teamId)
+    .order('shirt_number')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function upsertMatchRoster(matchId: string, teamId: string, rosters: { player_id: string, shirt_number: number }[]) {
+  // First clear existing roster for this team and match
+  await supabase.from('match_rosters').delete().match({ match_id: matchId, team_id: teamId })
+  
+  if (rosters.length === 0) return
+
+  // Insert new roster
+  const inserts = rosters.map(r => ({
+    match_id: matchId,
+    team_id: teamId,
+    player_id: r.player_id,
+    shirt_number: r.shirt_number
+  }))
+  const { error } = await supabase.from('match_rosters').insert(inserts)
+  if (error) throw error
+}
+
 
 // --- Goals ---
 export async function addGoal(
   matchId: string,
   teamId: string,
   playerId: string | null,
+  rosterId: string | null,
   minute: number | null,
   isOwnGoal = false
 ) {
   const { error } = await supabase
     .from('goals')
-    .insert({ match_id: matchId, team_id: teamId, player_id: playerId, minute, is_own_goal: isOwnGoal })
+    .insert({ match_id: matchId, team_id: teamId, player_id: playerId, roster_id: rosterId, minute, is_own_goal: isOwnGoal })
   if (error) throw error
 }
 
@@ -87,12 +130,13 @@ export async function addCard(
   matchId: string,
   teamId: string,
   playerId: string | null,
+  rosterId: string | null,
   cardType: 'yellow' | 'red',
   minute: number | null
 ) {
   const { error } = await supabase
     .from('cards')
-    .insert({ match_id: matchId, team_id: teamId, player_id: playerId, card_type: cardType, minute })
+    .insert({ match_id: matchId, team_id: teamId, player_id: playerId, roster_id: rosterId, card_type: cardType, minute })
   if (error) throw error
 }
 
@@ -102,39 +146,14 @@ export async function removeCard(cardId: string) {
 }
 
 // --- Players ---
-export async function getPlayers(teamId: string) {
+export async function getPlayers(teamId: string): Promise<Player[]> {
   const { data, error } = await supabase
     .from('players')
     .select('*')
     .eq('team_id', teamId)
-    .order('shirt_number')
+    .order('last_name')
   if (error) throw error
   return data ?? []
-}
-
-export async function upsertPlayer(
-  teamId: string,
-  name: string,
-  shirtNumber: number,
-  playerId?: string
-) {
-  if (playerId) {
-    const { error } = await supabase
-      .from('players')
-      .update({ name, shirt_number: shirtNumber })
-      .eq('id', playerId)
-    if (error) throw error
-  } else {
-    const { error } = await supabase
-      .from('players')
-      .insert({ team_id: teamId, name, shirt_number: shirtNumber })
-    if (error) throw error
-  }
-}
-
-export async function deletePlayer(playerId: string) {
-  const { error } = await supabase.from('players').delete().eq('id', playerId)
-  if (error) throw error
 }
 
 // --- Teams ---
@@ -149,29 +168,29 @@ export async function getTeamByPin(pin: string) {
 }
 
 // --- Top Scorers ---
-export async function getTopScorers(zone?: string): Promise<TopScorer[]> {
+export async function getTopScorers(tournamentId: string, zone?: string): Promise<TopScorer[]> {
   let q = supabase
     .from('goals')
     .select(`
       player_id,
-      player:players(id, name, shirt_number),
-      team:teams(id, name, zone)
+      player:players(id, first_name, last_name),
+      team:teams(id, name, zone, tournament_id)
     `)
     .eq('is_own_goal', false)
   const { data, error } = await q
   if (error) throw error
 
-  const counts: Record<string, { player_id: string; player_name: string; team_id: string; team_name: string; zone: string; goals: number }> = {}
+  const counts: Record<string, TopScorer> = {}
   for (const g of data ?? []) {
     if (!g.player_id) continue
     const player = Array.isArray(g.player) ? g.player[0] : g.player
     const team = Array.isArray(g.team) ? g.team[0] : g.team
-    if (!player || !team) continue
+    if (!player || !team || team.tournament_id !== tournamentId) continue
     if (zone && team.zone !== zone) continue
     if (!counts[g.player_id]) {
       counts[g.player_id] = {
         player_id: g.player_id,
-        player_name: player.name,
+        player_name: `${player.first_name} ${player.last_name}`,
         team_id: team.id,
         team_name: team.name,
         zone: team.zone,
@@ -180,28 +199,16 @@ export async function getTopScorers(zone?: string): Promise<TopScorer[]> {
     }
     counts[g.player_id].goals++
   }
-  return Object.values(counts).sort((a, b) => b.goals - a.goals) as TopScorer[]
+  return Object.values(counts).sort((a, b) => b.goals - a.goals)
 }
 
 // --- Fair Play ---
-export async function getFairPlay(): Promise<FairPlayEntry[]> {
+export async function getFairPlay(tournamentId: string): Promise<FairPlayEntry[]> {
   const { data, error } = await supabase
-    .from('cards')
-    .select(`team:teams(id, name, zone), card_type`)
+    .from('fair_play_standings')
+    .select('*')
+    .eq('tournament_id', tournamentId)
+    .order('fair_play_points', { ascending: true })
   if (error) throw error
-
-  const map: Record<string, FairPlayEntry> = {}
-  for (const c of data ?? []) {
-    const team = Array.isArray(c.team) ? c.team[0] : c.team
-    if (!team) continue
-    if (!map[team.id]) {
-      map[team.id] = { team_id: team.id, team_name: team.name, zone: team.zone, yellow_cards: 0, red_cards: 0, score: 0 }
-    }
-    if (c.card_type === 'yellow') map[team.id].yellow_cards++
-    if (c.card_type === 'red') map[team.id].red_cards++
-  }
-  return Object.values(map).map((e) => ({
-    ...e,
-    score: e.yellow_cards * 1 + e.red_cards * 3,
-  })).sort((a, b) => a.score - b.score) as FairPlayEntry[]
+  return data ?? []
 }

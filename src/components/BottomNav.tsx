@@ -35,7 +35,7 @@ const NAV = [
     ),
   },
   {
-    href: '/admin',
+    href: '/panel-admin',
     label: 'Admin',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -74,13 +74,13 @@ export default function BottomNav() {
                 </>
               )}
               <span style={{
-                color: active ? 'var(--ce-cyan)' : 'var(--ce-fg-4)',
+                color: active ? 'var(--ce-cyan)' : 'var(--ce-fg-2)',
                 filter: active ? 'drop-shadow(0 0 6px rgba(0,240,255,.6))' : 'none',
                 lineHeight: 1,
               }}>{item.icon}</span>
               <span style={{
                 fontSize: 8, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase',
-                color: active ? 'var(--ce-cyan)' : 'var(--ce-fg-4)', lineHeight: 1,
+                color: active ? 'var(--ce-cyan)' : 'var(--ce-fg-2)', lineHeight: 1,
               }}>{item.label}</span>
             </Link>
           )

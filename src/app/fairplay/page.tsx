@@ -12,13 +12,15 @@ const SANCTIONS = [
   { rule: 'Agresión a árbitro', sanction: 'Suspensión por el resto del torneo', icon: '🚫' },
 ]
 
+const TOURNAMENT_ID = '11111111-1111-1111-1111-111111111111'
+
 export default function FairPlayPage() {
   const [data, setData] = useState<FairPlayEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'ranking' | 'sanciones'>('ranking')
 
   useEffect(() => {
-    getFairPlay().then(setData).finally(() => setLoading(false))
+    getFairPlay(TOURNAMENT_ID).then(setData).finally(() => setLoading(false))
   }, [])
 
   return (

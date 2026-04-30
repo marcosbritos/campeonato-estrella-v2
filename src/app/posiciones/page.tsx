@@ -6,6 +6,7 @@ import type { Standing, Match, TopScorer, Zone } from '@/lib/types'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
+const TOURNAMENT_ID = '11111111-1111-1111-1111-111111111111'
 const ZONES: Zone[] = ['A', 'B', 'C']
 const MEDAL_COLOR = ['#5ffbff', '#00f0ff', '#00b8cc']
 
@@ -97,6 +98,7 @@ export default function PosicionesPage() {
   const [zone, setZone] = useState<Zone>('A')
   const [zoneStandings, setZoneStandings] = useState<Standing[]>([])
   const [zoneMatches, setZoneMatches] = useState<Match[]>([])
+  const [selectedRound, setSelectedRound] = useState<number | null>(null)
   const [generalStandings, setGeneralStandings] = useState<Standing[]>([])
   const [scorers, setScorers] = useState<TopScorer[]>([])
   const [loadingZone, setLoadingZone] = useState(true)
@@ -106,28 +108,33 @@ export default function PosicionesPage() {
   // Load zone data
   const loadZone = useCallback(async (z: Zone) => {
     setLoadingZone(true)
-    const [st, mt] = await Promise.all([getStandings(z), getMatches(z)])
+    const [st, mt] = await Promise.all([getStandings(TOURNAMENT_ID, z), getMatches(TOURNAMENT_ID, z)])
     setZoneStandings(st)
-    setZoneMatches(mt as Match[])
+    const matches = mt as Match[]
+    setZoneMatches(matches)
+    // default to last round with live/pending, else last round
+    const rounds = Array.from(new Set(matches.map(m => m.round))).sort((a, b) => a - b)
+    const liveRound = rounds.find(r => matches.filter(m => m.round === r).some(m => m.status !== 'finished'))
+    setSelectedRound(liveRound ?? rounds[rounds.length - 1] ?? null)
     setLoadingZone(false)
   }, [])
 
   // Load general + scorers once + realtime
   useEffect(() => {
-    getStandings().then(d => { setGeneralStandings(d); setLoadingGeneral(false) })
-    getTopScorers().then(d => { setScorers(d); setLoadingScorers(false) })
+    getStandings(TOURNAMENT_ID).then(d => { setGeneralStandings(d); setLoadingGeneral(false) })
+    getTopScorers(TOURNAMENT_ID).then(d => { setScorers(d); setLoadingScorers(false) })
 
     const ch = supabase.channel('pos-rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'goals' }, () => {
-        getStandings().then(setGeneralStandings)
-        getTopScorers().then(setScorers)
+        getStandings(TOURNAMENT_ID).then(setGeneralStandings)
+        getTopScorers(TOURNAMENT_ID).then(setScorers)
         loadZone(zone)
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cards' }, () => {
-        getStandings().then(setGeneralStandings)
+        getStandings(TOURNAMENT_ID).then(setGeneralStandings)
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => {
-        getStandings().then(setGeneralStandings)
+        getStandings(TOURNAMENT_ID).then(setGeneralStandings)
         loadZone(zone)
       })
       .subscribe()
@@ -183,10 +190,10 @@ export default function PosicionesPage() {
         {/* ── ZONE STANDINGS ── */}
         <SectionLabel eyebrow={`Zona ${zone}`} title="Tabla de posiciones" />
         <div style={{ padding: '0 12px' }}>
-          <div className="glass" style={{ borderRadius: 14, overflow: 'hidden' }}>
+          <div className="glass" style={{ borderRadius: 14, overflowX: 'auto' }}>
             {loadingZone ? <Spinner /> : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', minWidth: 360, borderCollapse: 'collapse' }}>
+              <div>
+                <table style={{ width: '100%', minWidth: 320, borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--ce-border)', background: 'var(--ce-bg-3)' }}>
                       {['#', 'EQUIPO', 'PTS', 'PJ', 'G', 'E', 'P', '+/-'].map((h, i) => (
@@ -216,22 +223,38 @@ export default function PosicionesPage() {
 
         {/* ── ZONE FIXTURE ── */}
         <SectionLabel eyebrow={`Zona ${zone} · Partidos`} title="Fixture" />
+        {!loadingZone && zoneMatches.length > 0 && (() => {
+          const rounds = Array.from(new Set(zoneMatches.map(m => m.round))).sort((a, b) => a - b)
+          return (
+            <div style={{ padding: '0 16px 12px', overflowX: 'auto' }} className="no-scrollbar">
+              <div style={{ display: 'flex', gap: 6, width: 'max-content' }}>
+                {rounds.map(r => {
+                  const active = selectedRound === r
+                  const hasLive = zoneMatches.filter(m => m.round === r).some(m => m.status === 'live')
+                  return (
+                    <button key={r} onClick={() => setSelectedRound(r)} className="tap" style={{
+                      padding: '7px 14px', borderRadius: 100, cursor: 'pointer', fontSize: 11, fontWeight: 900,
+                      background: active ? 'linear-gradient(135deg, var(--ce-cyan-3), var(--ce-cyan))' : 'var(--ce-card)',
+                      color: active ? '#000' : hasLive ? 'var(--ce-loss)' : 'var(--ce-fg-3)',
+                      border: active ? '1px solid transparent' : `1px solid ${hasLive ? 'rgba(255,51,102,.4)' : 'var(--ce-border)'}`,
+                      boxShadow: active ? '0 2px 10px rgba(0,240,255,.3)' : 'none',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {hasLive && !active && <span style={{ marginRight: 4 }}>●</span>}
+                      F{r}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
         <div style={{ padding: '0 16px' }}>
           {loadingZone ? <Spinner /> : zoneMatches.length === 0
             ? <p style={{ textAlign: 'center', padding: '24px 0', color: 'var(--ce-fg-4)', fontSize: 13 }}>Sin partidos cargados</p>
             : (() => {
-              const byRound: Record<number, Match[]> = {}
-              zoneMatches.forEach(m => { if (!byRound[m.round]) byRound[m.round] = []; byRound[m.round].push(m) })
-              return Object.keys(byRound).map(Number).sort((a, b) => a - b).map(round => (
-                <div key={round} style={{ marginBottom: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                    <div style={{ flex: 1, height: 1, background: 'var(--ce-divider)' }} />
-                    <span style={{ fontSize: 9, fontWeight: 900, letterSpacing: '.2em', color: 'var(--ce-fg-4)', textTransform: 'uppercase' }}>FECHA {round}</span>
-                    <div style={{ flex: 1, height: 1, background: 'var(--ce-divider)' }} />
-                  </div>
-                  {byRound[round].map(m => <MatchRow key={m.id} m={m} />)}
-                </div>
-              ))
+              const roundMatches = zoneMatches.filter(m => m.round === selectedRound)
+              return roundMatches.map(m => <MatchRow key={m.id} m={m} />)
             })()
           }
         </div>
@@ -239,10 +262,10 @@ export default function PosicionesPage() {
         {/* ── GENERAL STANDINGS ── */}
         <SectionLabel eyebrow="Todos los equipos" title="Tabla general" />
         <div style={{ padding: '0 12px' }}>
-          <div className="glass" style={{ borderRadius: 14, overflow: 'hidden' }}>
+          <div className="glass" style={{ borderRadius: 14, overflowX: 'auto' }}>
             {loadingGeneral ? <Spinner /> : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', minWidth: 360, borderCollapse: 'collapse' }}>
+              <div>
+                <table style={{ width: '100%', minWidth: 340, borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--ce-border)', background: 'var(--ce-bg-3)' }}>
                       {['#', 'EQUIPO', 'ZONA', 'PTS', 'PJ', 'G', 'E', 'P', '+/-'].map((h, i) => (

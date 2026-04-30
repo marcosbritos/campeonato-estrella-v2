@@ -2,8 +2,6 @@
 import Image from 'next/image'
 import { useTheme } from './ThemeProvider'
 
-const WHATSAPP_URL = 'https://wa.me/5491134290431'
-
 export default function Header() {
   const { theme, toggle } = useTheme()
   return (
@@ -15,7 +13,7 @@ export default function Header() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
           <div className="ce-logo">
-            <Image src="/logo.png" alt="Estrella" fill unoptimized style={{ objectFit: 'cover', filter: 'hue-rotate(168deg) saturate(1.8) brightness(1.15)' }} />
+            <Image src="/logo.png" alt="Estrella" fill unoptimized style={{ objectFit: 'contain' }} />
           </div>
           <div style={{ minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: 9, fontWeight: 800, letterSpacing: '.25em', textTransform: 'uppercase', color: 'var(--ce-cyan-3)', whiteSpace: 'nowrap' }}>
@@ -36,15 +34,9 @@ export default function Header() {
           color: 'var(--ce-fg-3)', fontSize: 14, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          {theme === 'dark' ? '☾' : '☀'}
+          {theme === 'light' ? '☀' : '☾'}
         </button>
 
-        <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="ce-wa tap">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.08-.3-.15-1.26-.46-2.39-1.48-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51-.17-.01-.37-.01-.57-.01s-.52.08-.79.37c-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.07c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.62.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2-1.41.25-.7.25-1.29.18-1.42-.08-.12-.28-.2-.57-.35M12.05 21.95h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.64-.23-.38a9.86 9.86 0 0 1-1.51-5.26c0-5.45 4.44-9.89 9.9-9.89 2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 0 1 2.9 6.99c-.01 5.45-4.45 9.89-9.91 9.89" />
-          </svg>
-          RAFA
-        </a>
       </div>
     </header>
   )

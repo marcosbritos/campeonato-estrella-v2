@@ -3,13 +3,14 @@ import './globals.css'
 import BottomNav from '@/components/BottomNav'
 import RegisterSW from '@/components/RegisterSW'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import SplashScreen from '@/components/SplashScreen'
 
 export const metadata: Metadata = {
   title: 'Campeonato de la Estrella',
   description: 'Seguimiento en vivo — Predio Pintita',
   manifest: '/manifest.json',
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'La Estrella' },
-  icons: { apple: '/icons/icon-192.png' },
+  icons: { icon: '/logo.png', apple: '/icons/icon-192.png' },
 }
 
 export const viewport: Viewport = {
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" data-theme="dark">
       <body style={{ background: 'var(--ce-bg)', color: 'var(--ce-fg)', minHeight: '100vh', paddingBottom: 72, overflowX: 'hidden' }}>
         <ThemeProvider>
+          <SplashScreen />
           <RegisterSW />
           <div className="mesh-bg" aria-hidden="true" />
           <div className="mesh-orb mesh-orb-a" aria-hidden="true" />

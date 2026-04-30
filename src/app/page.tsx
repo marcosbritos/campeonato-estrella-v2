@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import PredioCarousel from '@/components/PredioCarousel'
 
 const WA_URL = 'https://wa.me/5491134290431'
 
@@ -28,17 +29,9 @@ export default function HomePage() {
           background: 'linear-gradient(180deg, rgba(0,240,255,.08) 0%, rgba(0,0,0,.7) 100%)',
         }} />
         {/* Logo centrado */}
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-          <div style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(0,240,255,.7)', boxShadow: '0 0 24px rgba(0,240,255,.45)', position: 'relative' }}>
-            <Image src="/logo.png" alt="Estrella" fill unoptimized style={{ objectFit: 'cover', filter: 'hue-rotate(168deg) saturate(1.8) brightness(1.15)' }} />
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ margin: 0, fontSize: 10, fontWeight: 800, letterSpacing: '.3em', color: 'var(--ce-cyan)', textTransform: 'uppercase' }}>
-              Torneo Apertura
-            </p>
-            <h1 style={{ margin: '4px 0 0', fontSize: 26, fontWeight: 900, letterSpacing: '.04em', color: '#fff', lineHeight: 1, textShadow: '0 0 30px rgba(0,240,255,.4)' }}>
-              CAMPEONATO<br />DE LA ESTRELLA
-            </h1>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 200, height: 200, position: 'relative', filter: 'drop-shadow(0 0 32px rgba(0,240,255,.5))' }}>
+            <Image src="/logo.png" alt="Campeonato de la Estrella" fill unoptimized style={{ objectFit: 'contain' }} />
           </div>
         </div>
         {/* Bottom fade */}
@@ -57,15 +50,12 @@ export default function HomePage() {
 
       {/* Sobre el torneo */}
       <div style={{ padding: '24px 16px 0' }}>
-        <p style={{ margin: '0 0 6px', fontSize: 9, fontWeight: 800, letterSpacing: '.25em', textTransform: 'uppercase', color: 'var(--ce-cyan)' }}>
+        <p style={{ margin: '0 0 12px', fontSize: 9, fontWeight: 800, letterSpacing: '.25em', textTransform: 'uppercase', color: 'var(--ce-cyan)' }}>
           Sobre el torneo
         </p>
-        <h2 style={{ margin: '0 0 12px', fontSize: 22, fontWeight: 900, color: 'var(--ce-fg)', lineHeight: 1.1 }}>
-          ¿Qué es el Campeonato de la Estrella?
-        </h2>
         <div className="glass" style={{ borderRadius: 14, padding: '16px' }}>
           <p style={{ margin: 0, fontSize: 13, lineHeight: 1.7, color: 'var(--ce-fg-2)' }}>
-            El <strong style={{ color: 'var(--ce-fg)' }}>Campeonato de la Estrella</strong> es un torneo de fútbol amateur organizado en el <strong style={{ color: 'var(--ce-fg)' }}>Predio Pintita</strong>, con el objetivo de fomentar el deporte, la camaradería y la competencia sana entre equipos del barrio y la zona.
+            El <strong style={{ color: 'var(--ce-fg)' }}>Campeonato de la Estrella</strong> es un torneo de fútbol amateur organizado en el <strong style={{ color: 'var(--ce-fg)' }}>Predio Pintita</strong>, con el objetivo de fomentar el deporte y la competencia sana entre equipos del barrio y la zona.
           </p>
           <p style={{ margin: '12px 0 0', fontSize: 13, lineHeight: 1.7, color: 'var(--ce-fg-2)' }}>
             24 equipos divididos en <strong style={{ color: 'var(--ce-cyan)' }}>3 zonas</strong> compiten durante la fase regular. Los 2 mejores de cada zona avanzan a semifinales, con una gran final que coronará al campeón del torneo.
@@ -81,8 +71,8 @@ export default function HomePage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {[
             { icon: '⚽', title: 'Fase de grupos', desc: '8 equipos por zona, todos contra todos' },
-            { icon: '🏆', title: 'Semifinales', desc: 'Top 2 de cada zona se clasifica' },
-            { icon: '📍', title: 'Sede', desc: 'Predio Pintita · Canchas 1 y 2' },
+            { icon: '🏆', title: 'Semifinales', desc: 'Top 2 de cada zona y los 2 mejores terceros se clasifican' },
+            { icon: '📍', title: 'Sede', desc: 'Predio Pintita · Mariano Acosta 2005' },
             { icon: '⚖️', title: 'Fair Play', desc: 'Ranking de conducta deportiva por equipo' },
           ].map(f => (
             <div key={f.title} className="glass" style={{ borderRadius: 12, padding: '14px 12px' }}>
@@ -99,14 +89,7 @@ export default function HomePage() {
         <p style={{ margin: '0 0 10px', fontSize: 9, fontWeight: 800, letterSpacing: '.25em', textTransform: 'uppercase', color: 'var(--ce-cyan)' }}>
           El predio
         </p>
-        <div style={{ borderRadius: 14, overflow: 'hidden', position: 'relative', height: 160 }}>
-          <Image src="/bg.jpg" alt="Predio Pintita" fill unoptimized style={{ objectFit: 'cover', filter: 'brightness(.8) saturate(1.1)' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,.7), transparent)' }} />
-          <div style={{ position: 'absolute', bottom: 12, left: 14 }}>
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 900, color: '#fff' }}>Predio Pintita</p>
-            <p style={{ margin: '2px 0 0', fontSize: 10, color: 'rgba(255,255,255,.6)' }}>Sede oficial del torneo</p>
-          </div>
-        </div>
+        <PredioCarousel />
       </div>
 
       {/* Accesos rápidos */}
@@ -150,6 +133,15 @@ export default function HomePage() {
           Contactar Organización
         </a>
       </div>
+      {/* Footer */}
+      <footer style={{ margin: '32px 16px 0', padding: '20px 0', borderTop: '1px solid var(--ce-border)', textAlign: 'center' }}>
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--ce-fg-4)' }}>
+          Desarrollado por <span style={{ color: 'var(--ce-cyan)', fontWeight: 800 }}>B&amp;B</span>
+        </p>
+        <p style={{ margin: '6px 0 0', fontSize: 9, color: 'var(--ce-fg-4)', letterSpacing: '.1em' }}>
+          © 2026 · Campeonato de la Estrella
+        </p>
+      </footer>
     </main>
   )
 }

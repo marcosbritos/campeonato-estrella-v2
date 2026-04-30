@@ -1,65 +1,37 @@
 -- ============================================================
--- SEED: Equipos reales del Campeonato de la Estrella
--- Ejecutar DESPUÉS del schema.sql
+-- CAMPEONATO ESTRELLA — Seed Data (PWA v2)
+-- Ejecutar después del schema.sql
 -- ============================================================
 
--- ZONA A
-INSERT INTO teams (name, zone, pin) VALUES
-  ('ATLETICO LUGANO',   'A', '1001'),
-  ('INTER',             'A', '1002'),
-  ('SECTOR 32',         'A', '1003'),
-  ('PA LA BIRRA',       'A', '1004'),
-  ('TORNADO',           'A', '1005'),
-  ('JARDIN AMERICA',    'A', '1006'),
-  ('ALMIRANTE',         'A', '1007'),
-  ('TERCER TIEMPO',     'A', '1008');
+-- 1. Crear el torneo inicial
+INSERT INTO tournaments (id, name) 
+VALUES ('11111111-1111-1111-1111-111111111111', 'Campeonato Estrella 2026');
 
--- ZONA B
-INSERT INTO teams (name, zone, pin) VALUES
-  ('VICIOS FC',         'B', '2001'),
-  ('CALLE 10',          'B', '2002'),
-  ('SABUESOS',          'B', '2003'),
-  ('FORESTAL',          'B', '2004'),
-  ('PROGRESO',          'B', '2005'),
-  ('MANCHESTER BOYS',   'B', '2006'),
-  ('SUDAKAS FC',        'B', '2007'),
-  ('LA RESAKA FC',      'B', '2008');
+-- 2. Configurar reglas de Fair Play
+INSERT INTO fair_play_rules (tournament_id, yellow_card_points, red_card_points)
+VALUES ('11111111-1111-1111-1111-111111111111', 1, 3);
 
--- ZONA C
-INSERT INTO teams (name, zone, pin) VALUES
-  ('FALSO FUTBOL',          'C', '3001'),
-  ('CASITA NUEVA F.C',      'C', '3002'),
-  ('ROSARIO DE LA FRONTERA','C', '3003'),
-  ('D.C LOS PUMAS',         'C', '3004'),
-  ('420 F.C',               'C', '3005'),
-  ('GUEMES SFI',            'C', '3006'),
-  ('LOS PUMAS 2.0',         'C', '3007'),
-  ('DEPORTIVO ENTUSIASMO',  'C', '3008');
+-- 3. Crear equipos (Asignados al torneo)
+INSERT INTO teams (id, tournament_id, name, zone) VALUES
+-- Zona A
+('a1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'ATLETICO LUGANO', 'A'),
+('a2222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'INTER', 'A'),
+('a3333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', 'SECTOR 32', 'A'),
+('a4444444-4444-4444-4444-444444444444', '11111111-1111-1111-1111-111111111111', 'PA LA BIRRA', 'A');
 
--- ============================================================
--- Fixture Fecha 1 — ejemplo (ajustar fechas/horas reales)
--- ============================================================
--- Zona B Fecha 1
-WITH b AS (SELECT id, name FROM teams WHERE zone = 'B')
-INSERT INTO matches (zone, round, match_date, home_team_id, away_team_id)
-SELECT 'B', 1, '2025-11-03 10:00:00-03',
-  (SELECT id FROM b WHERE name = 'VICIOS FC'),
-  (SELECT id FROM b WHERE name = 'LA RESAKA FC');
+-- 4. Crear jugadores (Listas de Buena Fe)
+-- Llenamos algunos jugadores de prueba para ATLETICO LUGANO
+INSERT INTO players (team_id, first_name, last_name, dni, birth_date) VALUES
+('a1111111-1111-1111-1111-111111111111', 'Juan', 'Pérez', '35000000', '1990-01-01'),
+('a1111111-1111-1111-1111-111111111111', 'Carlos', 'Gómez', '36000000', '1991-05-10'),
+('a1111111-1111-1111-1111-111111111111', 'Martín', 'Rossi', '37000000', '1992-08-20'),
+('a1111111-1111-1111-1111-111111111111', 'Lucas', 'Fernández', '38000000', '1993-11-15');
 
-WITH b AS (SELECT id, name FROM teams WHERE zone = 'B')
-INSERT INTO matches (zone, round, match_date, home_team_id, away_team_id)
-SELECT 'B', 1, '2025-11-03 11:00:00-03',
-  (SELECT id FROM b WHERE name = 'CALLE 10'),
-  (SELECT id FROM b WHERE name = 'SUDAKAS FC');
+-- Llenamos algunos para INTER
+INSERT INTO players (team_id, first_name, last_name, dni, birth_date) VALUES
+('a2222222-2222-2222-2222-222222222222', 'Diego', 'Maradona', '14000000', '1960-10-30'),
+('a2222222-2222-2222-2222-222222222222', 'Lionel', 'Messi', '32000000', '1987-06-24');
 
-WITH b AS (SELECT id, name FROM teams WHERE zone = 'B')
-INSERT INTO matches (zone, round, match_date, home_team_id, away_team_id)
-SELECT 'B', 1, '2025-11-03 12:00:00-03',
-  (SELECT id FROM b WHERE name = 'SABUESOS'),
-  (SELECT id FROM b WHERE name = 'MANCHESTER BOYS');
-
-WITH b AS (SELECT id, name FROM teams WHERE zone = 'B')
-INSERT INTO matches (zone, round, match_date, home_team_id, away_team_id)
-SELECT 'B', 1, '2025-11-03 13:00:00-03',
-  (SELECT id FROM b WHERE name = 'FORESTAL'),
-  (SELECT id FROM b WHERE name = 'PROGRESO');
+-- 5. Crear un partido de ejemplo
+INSERT INTO matches (id, tournament_id, zone, round, home_team_id, away_team_id, status) VALUES
+('d1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'A', 1, 'a1111111-1111-1111-1111-111111111111', 'a2222222-2222-2222-2222-222222222222', 'pending');

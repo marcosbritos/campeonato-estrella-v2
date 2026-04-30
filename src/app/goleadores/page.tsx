@@ -6,13 +6,14 @@ import type { TopScorer } from '@/lib/types'
 
 const MEDAL = ['🥇', '🥈', '🥉']
 const MEDAL_COLOR = ['var(--ce-cyan-2)', 'var(--ce-cyan)', 'var(--ce-cyan-3)']
+const TOURNAMENT_ID = '11111111-1111-1111-1111-111111111111'
 
 export default function GoleadoresPage() {
   const [scorers, setScorers] = useState<TopScorer[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getTopScorers()
+    getTopScorers(TOURNAMENT_ID)
       .then(setScorers)
       .finally(() => setLoading(false))
   }, [])
