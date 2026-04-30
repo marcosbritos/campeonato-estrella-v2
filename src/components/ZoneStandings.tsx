@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { supabase, getStandings } from '@/lib/supabase'
 import type { Standing } from '@/lib/types'
 
+const TOURNAMENT_ID = '11111111-1111-1111-1111-111111111111'
+
 const ZONES = ['A', 'B', 'C', 'GEN'] as const
 type ZoneTab = (typeof ZONES)[number]
 
@@ -114,26 +116,6 @@ function TeamRow({ s, pos, delay }: { s: Standing; pos: number; delay: number })
         </span>
       </td>
 
-      {/* Cards */}
-      <td style={{ padding: '10px 10px 10px 4px', textAlign: 'center', width: 44 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
-          {s.yellow_cards > 0 && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <span style={{ display: 'inline-block', width: 7, height: 10, borderRadius: 1, background: '#f5c518', boxShadow: '0 0 5px rgba(245,197,24,0.5)' }} />
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>{s.yellow_cards}</span>
-            </span>
-          )}
-          {s.red_cards > 0 && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <span style={{ display: 'inline-block', width: 7, height: 10, borderRadius: 1, background: '#e74c3c', boxShadow: '0 0 5px rgba(231,76,60,0.5)' }} />
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>{s.red_cards}</span>
-            </span>
-          )}
-          {!s.yellow_cards && !s.red_cards && (
-            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.1)' }}>—</span>
-          )}
-        </div>
-      </td>
     </tr>
   )
 }
@@ -160,7 +142,7 @@ export default function ZoneStandings() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await getStandings(activeZone === 'GEN' ? undefined : activeZone)
+      const data = await getStandings(TOURNAMENT_ID, activeZone === 'GEN' ? undefined : activeZone)
       setStandings(data)
     } finally {
       setLoading(false)
@@ -233,7 +215,7 @@ export default function ZoneStandings() {
         <table style={{ width: '100%', minWidth: 490, borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              {['#','EQUIPO','PTS','PJ','G','E','P','+/-',''].map((h, i) => (
+              {['#','EQUIPO','PTS','PJ','G','E','P','+/-'].map((h, i) => (
                 <th key={i} style={{
                   padding: i === 1 ? '8px 6px' : '8px 4px',
                   fontSize: 9, fontWeight: 800, letterSpacing: '0.15em',
@@ -270,21 +252,12 @@ export default function ZoneStandings() {
         display: 'flex', alignItems: 'center', gap: 16, padding: '10px 16px',
         borderTop: '1px solid rgba(255,255,255,0.04)',
       }}>
-        {[
-          { color: '#00f0ff', label: 'Clasificado' },
-          { color: '#fbe44a', label: '🟨 Amarilla', card: true },
-          { color: '#ff3366', label: '🟥 Roja', card: true },
-        ].map((l, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {l.card
-              ? <span style={{ display: 'inline-block', width: 6, height: 9, borderRadius: 1, background: l.color }} />
-              : <span style={{ display: 'inline-block', width: 2, height: 14, borderRadius: 2, background: `linear-gradient(180deg, ${l.color}, #c0392b)` }} />
-            }
-            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              {l.label}
-            </span>
-          </div>
-        ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ display: 'inline-block', width: 2, height: 14, borderRadius: 2, background: 'linear-gradient(180deg, #00f0ff, #c0392b)' }} />
+          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            Clasificado
+          </span>
+        </div>
       </div>
     </div>
   )
