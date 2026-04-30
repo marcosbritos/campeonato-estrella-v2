@@ -7,10 +7,38 @@ import SplashScreen from '@/components/SplashScreen'
 
 export const metadata: Metadata = {
   title: 'Campeonato de la Estrella',
-  description: 'Seguimiento en vivo — Predio Pintita',
+  description: 'Seguimiento en vivo del torneo — Fixture, posiciones, goleadores y Fair Play. Predio Pintita, Mariano Acosta.',
   manifest: '/manifest.json',
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'La Estrella' },
-  icons: { icon: '/logo.png', apple: '/icons/icon-192.png' },
+  icons: {
+    icon: [
+      { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: '/icons/apple-touch-icon.png',
+  },
+  openGraph: {
+    title: 'Campeonato de la Estrella ⚽',
+    description: 'Seguí en vivo el torneo: fixture, posiciones, goleadores y Fair Play. Predio Pintita.',
+    url: 'https://campeonato-estrella.netlify.app',
+    siteName: 'Campeonato de la Estrella',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Logo del Campeonato de la Estrella',
+      },
+    ],
+    locale: 'es_AR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Campeonato de la Estrella ⚽',
+    description: 'Seguí en vivo el torneo: fixture, posiciones, goleadores y Fair Play.',
+    images: ['/og-image.png'],
+  },
 }
 
 export const viewport: Viewport = {
