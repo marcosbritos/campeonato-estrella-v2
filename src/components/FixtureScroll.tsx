@@ -10,140 +10,41 @@ import { es } from 'date-fns/locale'
 const ZONES = ['Todos', 'A', 'B', 'C'] as const
 type ZoneFilter = (typeof ZONES)[number]
 
-function MatchCard({ match, index }: { match: Match; index: number }) {
-  const isLive = match.status === 'live'
-  const isFinished = match.status === 'finished'
-  const dateLabel = match.match_date
-    ? format(new Date(match.match_date), "EEE d MMM · HH:mm", { locale: es })
-    : 'Fecha a confirmar'
-
+function MatchCard({ match: m, index }: { match: Match; index: number }) {
+  const isLive = m.status === 'live'
+  const isFinished = m.status === 'finished'
+  const dateLabel = m.match_date
+    ? format(new Date(m.match_date), "EEE d MMM · HH:mm", { locale: es })
+    : 'A confirmar'
   return (
-    <div
-      className="anim-slide-up"
-      style={{
-        margin: '0 16px 12px',
-        borderRadius: 16,
-        overflow: 'hidden',
-        position: 'relative',
-        animationDelay: `${index * 60}ms`,
-        background: isLive
-          ? 'linear-gradient(135deg, rgba(192,57,43,0.2) 0%, rgba(8,8,20,0.9) 60%)'
-          : 'rgba(10,10,22,0.75)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: isLive
-          ? '1px solid rgba(231,76,60,0.5)'
-          : '1px solid rgba(255,255,255,0.06)',
-        boxShadow: isLive
-          ? '0 8px 40px rgba(192,57,43,0.25), inset 0 1px 0 rgba(255,255,255,0.08)'
-          : '0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)',
-      }}
-    >
-      {/* Live animated top border */}
-      {isLive && (
-        <div
-          className="live-card-border"
-          style={{
-            position: 'absolute', top: 0, left: 0, right: 0, height: 2,
-            background: 'linear-gradient(90deg, #c0392b, #f5c518, #e74c3c)',
-          }}
-        />
-      )}
-
-      {/* Header bar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '8px 16px',
-        background: 'rgba(255,255,255,0.02)',
-        borderBottom: '1px solid rgba(255,255,255,0.04)',
-      }}>
-        <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>
-          ZONA {match.zone} · FECHA {match.round}
-        </span>
-        {isLive ? (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 900, color: '#e74c3c', letterSpacing: '0.1em' }}>
-            <span className="live-dot" />
-            EN VIVO
-          </span>
-        ) : isFinished ? (
-          <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            Finalizado
-          </span>
-        ) : (
-          <span style={{ fontSize: 9, fontWeight: 800, color: 'rgba(0,240,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            {dateLabel}
-          </span>
-        )}
+    <div className="glass anim-fade" style={{
+      borderRadius: 12, overflow: 'hidden', marginBottom: 8, margin: '0 16px 12px',
+      border: isLive ? '1px solid rgba(255,51,102,.45)' : '1px solid var(--ce-border)',
+      boxShadow: isLive ? '0 0 16px rgba(255,51,102,.15)' : 'none',
+      animationDelay: `${index * 60}ms`,
+    }}>
+      {isLive && <div style={{ height: 2, background: 'linear-gradient(90deg,var(--ce-cyan-3),var(--ce-cyan),var(--ce-loss))' }} />}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', borderBottom: '1px solid var(--ce-divider)', background: 'rgba(0,0,0,.05)' }}>
+        <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '.2em', color: 'var(--ce-fg-4)', textTransform: 'uppercase' }}>ZONA {m.zone} · F{m.round}</span>
+        {isLive
+          ? <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, fontWeight: 900, color: 'var(--ce-loss)', textTransform: 'uppercase' }}><span className="live-dot" style={{ width: 6, height: 6 }} />EN VIVO</span>
+          : isFinished
+            ? <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--ce-fg-4)' }}>Finalizado</span>
+            : <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--ce-cyan)', textTransform: 'uppercase' }}>{dateLabel}</span>
+        }
       </div>
-
-      {/* Match row */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '18px 16px' }}>
-        {/* Home */}
-        <div style={{ flex: 1, textAlign: 'right', paddingRight: 12 }}>
-          <p className="font-display" style={{
-            fontSize: 15, lineHeight: 1.1, letterSpacing: '0.04em',
-            color: 'var(--ce-fg)',
-            textShadow: 'none',
-          }}>
-            {match.home_team?.name}
-          </p>
-        </div>
-
-        {/* Score or VS */}
-        {(isFinished || isLive) ? (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 12, padding: '8px 16px',
-          }}>
-            <span className={isLive ? 'score-glow font-display' : 'font-display'} style={{
-              fontSize: 28, lineHeight: 1,
-              color: isLive ? '#ffffff' : 'rgba(255,255,255,0.9)',
-              minWidth: 24, textAlign: 'center',
-            }}>
-              {match.home_score}
-            </span>
-            <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.15)', fontWeight: 300, margin: '0 2px' }}>—</span>
-            <span className={isLive ? 'score-glow font-display' : 'font-display'} style={{
-              fontSize: 28, lineHeight: 1,
-              color: isLive ? '#ffffff' : 'rgba(255,255,255,0.9)',
-              minWidth: 24, textAlign: 'center',
-            }}>
-              {match.away_score}
-            </span>
-          </div>
-        ) : (
-          <div style={{
-            padding: '8px 14px',
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: 10,
-          }}>
-            <span className="font-display" style={{ fontSize: 14, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>VS</span>
-          </div>
-        )}
-
-        {/* Away */}
-        <div style={{ flex: 1, textAlign: 'left', paddingLeft: 12 }}>
-          <p className="font-display" style={{
-            fontSize: 15, lineHeight: 1.1, letterSpacing: '0.04em',
-            color: 'var(--ce-fg)',
-            textShadow: 'none',
-          }}>
-            {match.away_team?.name}
-          </p>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 12px' }}>
+        <p style={{ flex: 1, margin: 0, fontSize: 12, fontWeight: 900, color: 'var(--ce-fg)', textAlign: 'right', lineHeight: 1.2 }}>{m.home_team?.name}</p>
+        {(isLive || isFinished)
+          ? <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px' }}>
+              <span className={isLive ? 'score-glow' : ''} style={{ fontSize: 22, fontWeight: 900, color: 'var(--ce-fg)', minWidth: 20, textAlign: 'center' }}>{m.home_score}</span>
+              <span style={{ color: 'var(--ce-fg-4)', fontSize: 14, fontWeight: 300 }}>—</span>
+              <span className={isLive ? 'score-glow' : ''} style={{ fontSize: 22, fontWeight: 900, color: 'var(--ce-fg)', minWidth: 20, textAlign: 'center' }}>{m.away_score}</span>
+            </div>
+          : <span style={{ padding: '0 14px', fontSize: 11, color: 'var(--ce-fg-4)', fontWeight: 700 }}>VS</span>
+        }
+        <p style={{ flex: 1, margin: 0, fontSize: 12, fontWeight: 900, color: 'var(--ce-fg)', lineHeight: 1.2 }}>{m.away_team?.name}</p>
       </div>
-
-      {/* Pending date footer */}
-      {!isFinished && !isLive && match.match_date && (
-        <div style={{ textAlign: 'center', paddingBottom: 12 }}>
-          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-            {dateLabel}
-          </span>
-        </div>
-      )}
     </div>
   )
 }
@@ -217,12 +118,12 @@ export default function FixtureScroll() {
                 fontSize: 13, letterSpacing: '0.1em',
                 transition: 'all 0.2s ease',
                 ...(active ? {
-                  background: 'linear-gradient(135deg, #00b8cc, #00f0ff)',
-                  color: '#000000',
+                  background: 'linear-gradient(135deg, var(--ce-cyan-3), var(--ce-cyan))',
+                  color: 'var(--ce-bg-2)',
                 } : {
-                  background: 'rgba(255,255,255,0.05)',
-                  color: 'rgba(255,255,255,0.3)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'var(--ce-card)',
+                  color: 'var(--ce-fg-4)',
+                  border: '1px solid var(--ce-border)',
                 }),
               }}
             >
@@ -251,12 +152,12 @@ export default function FixtureScroll() {
                   fontSize: 12, letterSpacing: '0.1em',
                   transition: 'all 0.2s ease',
                   ...(active ? {
-                    background: 'rgba(255,255,255,0.9)',
-                    color: '#000000',
+                    background: 'var(--ce-fg)',
+                    color: 'var(--ce-bg-2)',
                   } : {
-                    background: 'rgba(255,255,255,0.05)',
-                    color: 'rgba(255,255,255,0.4)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'var(--ce-card)',
+                    color: 'var(--ce-fg-4)',
+                    border: '1px solid var(--ce-border)',
                   }),
                 }}
               >

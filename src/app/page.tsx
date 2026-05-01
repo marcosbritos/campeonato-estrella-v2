@@ -19,13 +19,13 @@ export default function HomePage() {
           alt="Predio Pintita"
           fill
           unoptimized
-          style={{ objectFit: 'cover', filter: 'brightness(.45) saturate(1.2)' }}
+          style={{ objectFit: 'cover', filter: 'brightness(0.65) saturate(1.2)' }}
           priority
         />
         {/* Cyan overlay */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(180deg, rgba(0,240,255,.08) 0%, rgba(0,0,0,.7) 100%)',
+          background: 'linear-gradient(180deg, rgba(0,240,255,.08) 0%, var(--ce-bg-overlay) 100%)',
         }} />
         {/* Logo centrado */}
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -36,7 +36,6 @@ export default function HomePage() {
         {/* Bottom fade */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to bottom, transparent, var(--ce-bg))' }} />
       </div>
-
 
       {/* Sobre el torneo */}
       <div style={{ padding: '24px 16px 0' }}>
@@ -128,7 +127,7 @@ export default function HomePage() {
           display: 'inline-flex', alignItems: 'center', gap: 10,
           padding: '14px 24px', borderRadius: 100,
           background: 'linear-gradient(135deg, var(--ce-cyan-3), var(--ce-cyan))',
-          color: '#000', fontWeight: 900, fontSize: 13, letterSpacing: '.06em',
+          color: 'var(--ce-bg-2)', fontWeight: 900, fontSize: 13, letterSpacing: '.06em',
           textDecoration: 'none', textTransform: 'uppercase',
           boxShadow: '0 6px 24px rgba(0,240,255,.3)',
         }}>

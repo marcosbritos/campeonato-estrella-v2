@@ -40,7 +40,7 @@ function StandingRow({ s, pos }: { s: Standing; pos: number }) {
         </div>
       </td>
       <td style={{ padding: '9px 4px', textAlign: 'center', width: 36 }}>
-        <span style={isClassif ? { fontSize: 15, fontWeight: 900, color: '#00f0ff', textShadow: '0 0 12px rgba(0,240,255,.55)' } : { fontSize: 14, fontWeight: 900, color: 'var(--ce-fg)' }}>{s.points}</span>
+        <span style={{ fontSize: 14, fontWeight: 900, color: 'var(--ce-fg)' }}>{s.points}</span>
       </td>
       <td style={{ padding: '9px 3px', textAlign: 'center', width: 26, fontSize: 11, color: 'var(--ce-fg-3)', fontWeight: 600 }}>{s.played}</td>
       <td style={{ padding: '9px 3px', textAlign: 'center', width: 22, fontSize: 11, color: 'var(--ce-win)', fontWeight: 700 }}>{s.won}</td>
@@ -197,7 +197,7 @@ export default function PosicionesPage() {
                         <th key={i} style={{
                           padding: i === 1 ? '8px 6px' : '8px 4px', fontSize: 9, fontWeight: 800,
                           letterSpacing: '.15em', textTransform: 'uppercase',
-                          color: h === 'PTS' ? 'rgba(0,240,255,.75)' : 'var(--ce-fg-4)',
+                          color: 'var(--ce-fg-4)',
                           textAlign: i === 1 ? 'left' : 'center',
                         }}>{h}</th>
                       ))}
@@ -262,14 +262,14 @@ export default function PosicionesPage() {
           <div className="glass" style={{ borderRadius: 14, overflowX: 'auto' }}>
             {loadingGeneral ? <Spinner /> : (
               <div>
-                <table style={{ width: '100%', minWidth: 340, borderCollapse: 'collapse' }}>
+                <table style={{ width: '100%', minWidth: 310, borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--ce-border)', background: 'var(--ce-bg-3)' }}>
                       {['#', 'EQUIPO', 'ZONA', 'PTS', 'PJ', 'G', 'E', 'P', '+/-'].map((h, i) => (
                         <th key={i} style={{
                           padding: i === 1 ? '8px 6px' : '8px 4px', fontSize: 9, fontWeight: 800,
                           letterSpacing: '.15em', textTransform: 'uppercase',
-                          color: h === 'PTS' ? 'rgba(0,240,255,.75)' : 'var(--ce-fg-4)',
+                          color: 'var(--ce-fg-4)',
                           textAlign: i === 1 ? 'left' : 'center',
                         }}>{h}</th>
                       ))}

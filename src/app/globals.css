@@ -19,6 +19,7 @@
   --ce-bg:       #000000;
   --ce-bg-2:     #060a0a;
   --ce-bg-3:     #0a1214;
+  --ce-bg-overlay: rgba(0, 0, 0, 0.7);
   --ce-card:     rgba(0, 240, 255, 0.04);
   --ce-card-2:   rgba(0, 0, 0, 0.88);
   --ce-border:   rgba(0, 240, 255, 0.12);
@@ -40,12 +41,14 @@
 
   --ce-blur: blur(12px) saturate(140%);
   --ce-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ce-logo-filter: drop-shadow(0 0 8px rgba(0,240,255,.5));
 }
 
 [data-theme="light"] {
   --ce-bg:      #f0feff;
   --ce-bg-2:    #ffffff;
   --ce-bg-3:    #e0fafe;
+  --ce-bg-overlay: rgba(240, 254, 255, 0.7);
   --ce-card:    rgba(0,240,255,.06);
   --ce-card-2:  rgba(255,255,255,.95);
   --ce-border:  rgba(0,184,204,.18);
@@ -70,6 +73,7 @@
     radial-gradient(ellipse 60% 50% at 85% 15%, rgba(95,251,255,.10) 0%, transparent 55%),
     radial-gradient(ellipse 80% 55% at 50% 100%, rgba(0,212,255,.08) 0%, transparent 65%),
     #f0feff;
+  --ce-logo-filter: brightness(0.2) saturate(2) drop-shadow(0 0 4px rgba(0,184,204,.2));
 }
 
 /* Reset */
@@ -80,7 +84,8 @@ body {
   background: var(--ce-bg);
   color: var(--ce-fg);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  overscroll-behavior: none;
+  overscroll-behavior-y: auto;
+  overscroll-behavior-x: none;
   -webkit-font-smoothing: antialiased;
   -webkit-overflow-scrolling: touch;
 }
@@ -132,7 +137,7 @@ body {
 
 /* Logo */
 .ce-logo { position: relative; width: 42px; height: 42px; flex-shrink: 0; animation: logo-float 5s ease-in-out infinite; }
-.ce-logo img { width: 100%; height: 100%; display: block; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0,240,255,.5)); }
+.ce-logo img { width: 100%; height: 100%; display: block; object-fit: contain; filter: var(--ce-logo-filter); }
 .ce-logo::before { display: none; }
 
 /* WhatsApp / contact badge */
