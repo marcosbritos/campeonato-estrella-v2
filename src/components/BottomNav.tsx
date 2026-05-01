@@ -61,7 +61,7 @@ const NAV = [
 export default function BottomNav() {
   const path = usePathname()
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-2" style={{ borderTop: '1px solid var(--ce-border)' }}>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-2" style={{ borderTop: '1px solid var(--ce-border)', paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}>
       <div style={{
         position: 'absolute', top: -1, left: 0, right: 0, height: 1,
         background: 'linear-gradient(90deg, transparent, rgba(0,240,255,.5), rgba(95,251,255,.4), rgba(0,240,255,.5), transparent)',
