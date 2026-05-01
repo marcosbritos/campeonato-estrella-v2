@@ -82,8 +82,8 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
         <div style={{ flex: 1, textAlign: 'right', paddingRight: 12 }}>
           <p className="font-display" style={{
             fontSize: 15, lineHeight: 1.1, letterSpacing: '0.04em',
-            color: isFinished && match.home_score > match.away_score ? '#00f0ff' : '#ffffff',
-            textShadow: isFinished && match.home_score > match.away_score ? '0 0 20px rgba(0,240,255,0.45)' : 'none',
+            color: 'var(--ce-fg)',
+            textShadow: 'none',
           }}>
             {match.home_team?.name}
           </p>
@@ -128,8 +128,8 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
         <div style={{ flex: 1, textAlign: 'left', paddingLeft: 12 }}>
           <p className="font-display" style={{
             fontSize: 15, lineHeight: 1.1, letterSpacing: '0.04em',
-            color: isFinished && match.away_score > match.home_score ? '#f5c518' : '#ffffff',
-            textShadow: isFinished && match.away_score > match.home_score ? '0 0 20px rgba(245,197,24,0.4)' : 'none',
+            color: 'var(--ce-fg)',
+            textShadow: 'none',
           }}>
             {match.away_team?.name}
           </p>

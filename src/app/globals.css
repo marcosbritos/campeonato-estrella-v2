@@ -54,6 +54,17 @@
   --ce-fg-2:    rgba(0,26,31,.68);
   --ce-fg-3:    rgba(0,26,31,.45);
   --ce-fg-4:    rgba(0,26,31,.28);
+
+  --ce-cyan:    #007a8a;
+  --ce-cyan-2:  #005c66;
+  --ce-cyan-3:  #003d44;
+  --ce-electric:#005c66;
+  --ce-win:     #00804d;
+  --ce-loss:    #cc0033;
+  --ce-warn:    #b29900;
+  
+  --ce-grad-title: linear-gradient(135deg, #001a1f 0%, #007a8a 50%, #00b8cc 100%);
+
   --ce-mesh:
     radial-gradient(ellipse 70% 55% at 15% 20%, rgba(0,240,255,.14) 0%, transparent 60%),
     radial-gradient(ellipse 60% 50% at 85% 15%, rgba(95,251,255,.10) 0%, transparent 55%),

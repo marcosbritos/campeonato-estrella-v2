@@ -79,7 +79,7 @@ function MatchRow({ m }: { m: Match }) {
         }
       </div>
       <div style={{ display: 'flex', alignItems: 'center', padding: '12px 12px' }}>
-        <p style={{ flex: 1, margin: 0, fontSize: 12, fontWeight: 900, color: isFinished && m.home_score > m.away_score ? 'var(--ce-cyan)' : 'var(--ce-fg)', textAlign: 'right', lineHeight: 1.2 }}>{m.home_team?.name}</p>
+        <p style={{ flex: 1, margin: 0, fontSize: 12, fontWeight: 900, color: 'var(--ce-fg)', textAlign: 'right', lineHeight: 1.2 }}>{m.home_team?.name}</p>
         {(isLive || isFinished)
           ? <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px' }}>
               <span className={isLive ? 'score-glow' : ''} style={{ fontSize: 22, fontWeight: 900, color: 'var(--ce-fg)', minWidth: 20, textAlign: 'center' }}>{m.home_score}</span>
@@ -88,7 +88,7 @@ function MatchRow({ m }: { m: Match }) {
             </div>
           : <span style={{ padding: '0 14px', fontSize: 11, color: 'var(--ce-fg-4)', fontWeight: 700 }}>VS</span>
         }
-        <p style={{ flex: 1, margin: 0, fontSize: 12, fontWeight: 900, color: isFinished && m.away_score > m.home_score ? 'var(--ce-cyan)' : 'var(--ce-fg)', lineHeight: 1.2 }}>{m.away_team?.name}</p>
+        <p style={{ flex: 1, margin: 0, fontSize: 12, fontWeight: 900, color: 'var(--ce-fg)', lineHeight: 1.2 }}>{m.away_team?.name}</p>
       </div>
     </div>
   )
