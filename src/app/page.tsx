@@ -3,39 +3,13 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import PredioCarousel from '@/components/PredioCarousel'
-import { getTopScorers } from '@/lib/supabase'
-import type { TopScorer } from '@/lib/types'
 
 const WA_URL = 'https://wa.me/5491134290431'
 const TOURNAMENT_ID = '11111111-1111-1111-1111-111111111111'
 
 
 
-function TopScorerWidget({ scorer }: { scorer: TopScorer | null }) {
-  if (!scorer) return null
-  return (
-    <div className="glass" style={{ borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, borderLeft: '2px solid var(--ce-cyan)' }}>
-      <span style={{ fontSize: 28 }}>⚽</span>
-      <div style={{ flex: 1 }}>
-        <p style={{ margin: 0, fontSize: 9, fontWeight: 800, letterSpacing: '.15em', textTransform: 'uppercase', color: 'var(--ce-fg-4)' }}>Goleador del torneo</p>
-        <p style={{ margin: '2px 0 0', fontSize: 15, fontWeight: 900, color: 'var(--ce-fg)' }}>{scorer.player_name}</p>
-        <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--ce-fg-4)' }}>{scorer.team_name}</p>
-      </div>
-      <div style={{ textAlign: 'center' }}>
-        <p style={{ margin: 0, fontSize: 28, fontWeight: 900, color: 'var(--ce-cyan)', textShadow: '0 0 12px rgba(0,240,255,.5)', lineHeight: 1 }}>{scorer.goals}</p>
-        <p style={{ margin: '2px 0 0', fontSize: 8, fontWeight: 800, letterSpacing: '.15em', textTransform: 'uppercase', color: 'var(--ce-fg-4)' }}>goles</p>
-      </div>
-    </div>
-  )
-}
-
 export default function HomePage() {
-  const [topScorer, setTopScorer] = useState<TopScorer | null>(null)
-
-  useEffect(() => {
-    getTopScorers(TOURNAMENT_ID).then(s => { if (s.length > 0) setTopScorer(s[0]) })
-  }, [])
-
   return (
     <main style={{ paddingBottom: 32 }}>
       {/* Hero */}
@@ -63,10 +37,6 @@ export default function HomePage() {
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to bottom, transparent, var(--ce-bg))' }} />
       </div>
 
-      {/* Goleador del torneo */}
-      <div style={{ padding: '20px 16px 0' }}>
-        <TopScorerWidget scorer={topScorer} />
-      </div>
 
       {/* Sobre el torneo */}
       <div style={{ padding: '24px 16px 0' }}>
