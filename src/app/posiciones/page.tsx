@@ -101,10 +101,8 @@ export default function PosicionesPage() {
   const [zoneMatches, setZoneMatches] = useState<Match[]>([])
   const [selectedRound, setSelectedRound] = useState<number | null>(null)
   const [generalStandings, setGeneralStandings] = useState<Standing[]>([])
-  const [scorers, setScorers] = useState<TopScorer[]>([])
   const [loadingZone, setLoadingZone] = useState(true)
   const [loadingGeneral, setLoadingGeneral] = useState(true)
-  const [loadingScorers, setLoadingScorers] = useState(true)
 
   // Load zone data
   const loadZone = useCallback(async (z: Zone) => {
@@ -123,12 +121,10 @@ export default function PosicionesPage() {
   // Load general + scorers once + realtime
   useEffect(() => {
     getStandings(TOURNAMENT_ID).then(d => { setGeneralStandings(d); setLoadingGeneral(false) })
-    getTopScorers(TOURNAMENT_ID).then(d => { setScorers(d); setLoadingScorers(false) })
 
     const ch = supabase.channel('pos-rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'goals' }, () => {
         getStandings(TOURNAMENT_ID).then(setGeneralStandings)
-        getTopScorers(TOURNAMENT_ID).then(setScorers)
         loadZone(zone)
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cards' }, () => {
@@ -306,33 +302,6 @@ export default function PosicionesPage() {
           </div>
         </div>
 
-        {/* ── GOLEADORES ── */}
-        <SectionLabel eyebrow="Artilleros del torneo" title="Goleadores" />
-        <div style={{ padding: '0 16px 16px' }}>
-          {loadingScorers ? <Spinner /> : scorers.length === 0
-            ? <p style={{ textAlign: 'center', padding: '24px 0', color: 'var(--ce-fg-4)', fontSize: 13 }}>Sin goles registrados aún</p>
-            : scorers.map((s, i) => (
-              <div key={s.player_id} className="glass anim-rise" style={{
-                animationDelay: `${i * 35}ms`,
-                borderRadius: 12, padding: '12px 14px', marginBottom: 8,
-                display: 'flex', alignItems: 'center', gap: 12,
-                borderLeft: i < 3 ? `2px solid ${MEDAL_COLOR[i]}` : '2px solid var(--ce-border)',
-              }}>
-                <span style={{ width: 26, textAlign: 'center', fontSize: i < 3 ? 18 : 12, fontWeight: i >= 3 ? 900 : undefined, color: i >= 3 ? 'var(--ce-fg-4)' : undefined }}>
-                  {i < 3 ? ['🥇', '🥈', '🥉'][i] : i + 1}
-                </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 900, color: 'var(--ce-fg)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.player_name}</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 9, color: 'var(--ce-fg-4)', letterSpacing: '.06em' }}>{s.team_name} · Zona {s.zone}</p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ fontSize: 20, fontWeight: 900, color: i < 3 ? MEDAL_COLOR[i] : 'var(--ce-fg)', textShadow: i === 0 ? '0 0 10px rgba(0,240,255,.5)' : 'none' }}>{s.goals}</span>
-                  <span style={{ fontSize: 11, color: 'var(--ce-fg-4)' }}>⚽</span>
-                </div>
-              </div>
-            ))
-          }
-        </div>
 
       </main>
     </>
