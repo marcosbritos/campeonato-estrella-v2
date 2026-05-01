@@ -1,6 +1,6 @@
 {
   "name": "Campeonato de la Estrella",
-  "short_name": "La Estrella",
+  "short_name": "Campeonato de la Estrella",
   "description": "Seguimiento en vivo del Campeonato de la Estrella - Predio Pintita",
   "start_url": "/",
   "display": "standalone",
