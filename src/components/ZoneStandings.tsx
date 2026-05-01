@@ -24,7 +24,7 @@ function TeamRow({ s, pos, delay }: { s: Standing; pos: number; delay: number })
   return (
     <tr
       className="team-row tap"
-      onClick={() => router.push(`/equipo/${s.team_id}`)}
+      onClick={() => router.push(`/equipo?id=${s.team_id}`)}
       style={{
         borderBottom: '1px solid rgba(255,255,255,0.04)',
         animationDelay: `${delay}ms`,

@@ -1,16 +1,16 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { getTeamById, getTeamMatches, getTopScorers } from '@/lib/supabase'
 import type { Team, Match, TopScorer } from '@/lib/types'
 import TeamLogo from '@/components/TeamLogo'
 
 const TOURNAMENT_ID = '11111111-1111-1111-1111-111111111111'
 
-export default function TeamDetailPage() {
-  const params = useParams()
+function TeamDetailContent() {
+  const searchParams = useSearchParams()
   const router = useRouter()
-  const teamId = params.id as string
+  const teamId = searchParams.get('id') || ''
 
   const [team, setTeam] = useState<Team | null>(null)
   const [matches, setMatches] = useState<Match[]>([])
@@ -175,5 +175,17 @@ export default function TeamDetailPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function TeamDetailPage() {
+  return (
+    <Suspense fallback={
+      <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(0,240,255,0.15)', borderTopColor: '#00f0ff', animation: 'spin 0.8s linear infinite' }} />
+      </main>
+    }>
+      <TeamDetailContent />
+    </Suspense>
   )
 }
