@@ -49,7 +49,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" data-theme="dark">
-      <body style={{ background: 'var(--ce-bg)', color: 'var(--ce-fg)', minHeight: '100vh', paddingBottom: 72, overflowX: 'hidden' }}>
+      <body style={{ background: 'var(--ce-bg)', color: 'var(--ce-fg)', minHeight: '100dvh', paddingBottom: 72, overflowX: 'hidden' }}>
         <ThemeProvider>
           <SplashScreen />
           <RegisterSW />

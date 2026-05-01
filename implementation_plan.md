@@ -1,93 +1,69 @@
-# Plan de Implementación: PWA de Gestión de Torneos (Estilo Britos Berón)
+# Arquitectura y Estado Final: PWA Campeonato de la Estrella
 
-Este documento detalla la arquitectura técnica, los cambios en base de datos y el flujo de usuario para transformar "Campeonato Estrella" en una PWA profesional que elimine los cuellos de botella operativos en la carga de datos de los partidos.
+Este documento resume la arquitectura técnica actual del proyecto, el esquema de la base de datos, y provee una revisión crítica con recomendaciones para el futuro crecimiento (especialmente si se quiere transformar en un producto multi-torneo "Estilo Britos Berón").
 
-## Análisis y Conclusiones Comerciales
+## 1. Stack Tecnológico
+- **Frontend / Framework:** Next.js 14 (App Router)
+- **Despliegue:** Netlify (Static Export - `output: 'export'`)
+- **Estilos:** CSS Modules y Tailwind-like utility classes customizadas (`globals.css`). Diseño "Glassmorphism" oscuro.
+- **Base de Datos & Backend:** Supabase (PostgreSQL + REST API nativa).
+- **PWA:** Archivo `manifest.json` y `sw.js` (Service Worker) para permitir instalación y acceso offline básico.
+- **Hosting de Medios:** Las imágenes de equipos (escudos) y fotos del predio deben alojarse en un CDN o en el Storage de Supabase (actualmente usa URLs externas o locales).
 
-El modelo de negocio es excelente. Cobrar un 2% de la recaudación por partido ($4,800 ARS aprox. por partido * 12 partidos = $57,600 ARS por fin de semana por torneo). Si logramos digitalizar y automatizar el proceso sin fallas, escalar a 3 torneos te daría un ingreso recurrente muy atractivo sin esfuerzo operativo manual de tu parte. 
+## 2. Estructura de la Base de Datos (Supabase)
 
-**Mejoras Clave Propuestas para Escalar:**
-1. **Multitorneo:** Actualmente la base de datos asume un único torneo. Deberíamos preparar la arquitectura para soportar múltiples torneos de forma nativa sin tener que clonar el código.
-2. **Offline-First Parcial:** En las canchas la señal suele ser mala. La PWA debe cargar rápido mediante caché y permitir al árbitro ver las listas pre-cargadas incluso con baja conexión.
-3. **Cero Texto Libre:** Para evitar errores humanos (ej. "García" vs "Garcia "), todo debe ser con selectores dinámicos basados en la base de datos pre-cargada.
+La base de datos relacional está optimizada para lectura rápida.
 
-> [!IMPORTANT]
-> ## User Review Required
-> Necesito tu confirmación sobre los siguientes puntos antes de comenzar la codificación:
-> 1. **Manejo de Jugadores Libres:** Si un jugador es expulsado o se lesiona y lo reemplazan, ¿se modifica la lista de 25 o la lista de 25 queda bloqueada para todo el torneo?
-> 2. **Soporte Multitorneo:** ¿Quieres que apliquemos la lógica para que un mismo panel administre los 3 torneos (recomendado), o prefieres tener 3 bases de datos separadas?
-> 3. **Modo Offline:** ¿El árbitro debe poder cargar datos sin internet y que se sincronicen cuando recupere la conexión, o asumimos que siempre habrá un mínimo de 3G/4G?
+### Tablas Principales:
+*   `tournaments`: Almacena información del torneo (ID, nombre, estado). Actualmente hay un ID *hardcodeado* (`11111111...`) que representa al "Campeonato de la Estrella".
+*   `teams`: Equipos participantes. Relacionados al torneo. Campos: `name`, `zone` (A, B, C), `logo_url`.
+*   `matches`: Partidos del fixture.
+    *   Campos clave: `home_team_id`, `away_team_id`, `home_score`, `away_score`, `status` (pending, live, finished), `round` (fecha).
+*   `players`: Jugadores registrados, vinculados a un `team_id`.
+*   `goals`: Registro individual de goles. Vincula un `match_id`, un `player_id` y un `team_id`.
+*   `cards`: Registro de tarjetas (amarillas/rojas). Vincula partido y jugador. Para el Fair Play, las rojas descuentan puntos extra.
+*   `match_events`: (Opcional/Histórico) Registro minuto a minuto de lo que sucede en la cancha.
 
----
+### Vistas SQL (Views):
+Para evitar cálculos pesados en el frontend, se crearon vistas en Supabase que pre-calculan las tablas:
+*   `standings_view`: Calcula puntos, partidos jugados, ganados, empatados, perdidos y diferencia de gol basándose en los resultados de `matches`.
+*   `fair_play_view`: Calcula los puntos de Fair Play basándose en las tarjetas registradas en `cards`.
 
-## 1. Modificaciones a la Estructura de Datos (Supabase)
+## 3. Flujo de Datos y Construcción (Build)
 
-Debemos modificar el esquema relacional (`supabase/schema.sql`) para soportar listas de buena fe y dorsales dinámicos.
-
-### Nuevas Tablas y Cambios
-
-- **`players` (Actualizado):**
-  - Quitar `shirt_number` fijo.
-  - Agregar: `last_name`, `dni`, `dob` (Date of Birth).
-  - Mantener restricción de máximo 25 jugadores por equipo.
-
-- **`match_rosters` (Nueva Tabla):**
-  - Guarda qué jugador jugó qué partido y con qué número de camiseta.
-  - Campos: `id`, `match_id`, `team_id`, `player_id`, `shirt_number`.
-
-- **`matches` (Actualizado):**
-  - Agregar campo `observations` (TEXT) para el reporte final del árbitro.
-
-- **`cards` y `goals` (Actualizado):**
-  - Se vinculan al `player_id` (y opcionalmente a la entrada del `match_rosters` para asegurar consistencia del dorsal).
+Al usar `output: 'export'` en Next.js, la aplicación se compila a archivos HTML/JS estáticos.
+*   **Lectura (Usuarios):** Los usuarios interactúan con páginas estáticas hidratadas por React. Los datos se obtienen en el cliente (`useEffect` + `supabase-js`) directamente de la API de Supabase.
+*   **Escritura (Admin):** El panel de administración (`/panel-admin`) permite actualizar resultados y estado de partidos. Al guardar, se impacta en Supabase.
+*   **Realtime:** La tabla de posiciones y goles utiliza los WebSockets de Supabase (`supabase.channel`) para actualizar la pantalla al instante si hay cambios en la base de datos, ideal para la vista "EN VIVO" en la cancha.
 
 ---
 
-## 2. Flujo Operativo (User Journey)
+## 4. Crítica Técnica y Oportunidades de Mejora
 
-### A. Pre-partido (Vista Delegado)
-1. El delegado ingresa a `/delegado` con su PIN.
-2. Ve su "Lista de Buena Fe" (25 jugadores bloqueados).
-3. Selecciona a los titulares y suplentes para la fecha actual, asignándoles un número de camiseta (Dropdown de 1 a 99).
-4. El sistema valida que no haya dorsales repetidos.
-5. Al guardar, se genera el registro en `match_rosters`.
+El proyecto actual es un "MVP" (Minimum Viable Product) sólido y visualmente muy atractivo para un solo torneo. Sin embargo, para escalarlo como un producto SaaS (Software as a Service) o marca blanca para otros predios, se deben resolver las siguientes deudas técnicas:
 
-### B. Post-partido (Vista Árbitro / Administrador)
-1. El admin ingresa a la planilla digital del partido.
-2. Interfaz en 3 pasos rápidos (Mobile-First):
-   - **Paso 1 - Resultado Final:** Carga de goles locales y visitantes.
-   - **Paso 2 - Goleadores:** Por cada gol indicado en el Paso 1, aparece un selector. Al abrirlo, muestra la lista de jugadores de ese equipo **con el número de camiseta que se les asignó en el pre-partido**.
-   - **Paso 3 - Tarjetas y Sanciones:** Permite agregar Amarillas o Rojas seleccionando al jugador por su número/nombre.
-   - **Paso 4 - Observaciones:** Campo de texto libre para reporte del árbitro.
-3. Botón **"Finalizar Partido"**.
+### A. Gestión de Múltiples Torneos (Multi-tenant)
+**Estado Actual:** El ID del torneo está *hardcodeado* en el frontend (`const TOURNAMENT_ID = ...`). 
+**Crítica:** Si Britos Berón consigue otro cliente (ej. "Torneo El Relámpago"), habría que duplicar todo el código fuente y crear otro repositorio en GitHub.
+**Solución:** Implementar en Next.js la lectura del dominio o subdominio, o usar una ruta dinámica desde el inicio, para que una sola base de código pueda cargar el torneo A o el torneo B dinámicamente desde la base de datos.
 
----
+### B. Panel de Administración y Seguridad
+**Estado Actual:** El panel de administración está protegido por un PIN básico (frontend-only). Cualquiera que descubra el PIN o analice el código JS podría teóricamente interactuar con las rutas de Supabase si se expone la "anon key" sin políticas de seguridad de nivel de fila (RLS).
+**Crítica:** Inseguro para producción a largo plazo o para abrirlo a que los propios veedores carguen datos.
+**Solución:** 
+1. Implementar **Supabase Auth** (email/password o Magic Link) para los administradores.
+2. Activar **Row Level Security (RLS)** en PostgreSQL para asegurar que las tablas solo puedan ser modificadas (INSERT/UPDATE/DELETE) por usuarios autenticados con rol de administrador.
 
-## 3. Automatización y Lógica de Negocio
+### C. Manejo de Imágenes
+**Estado Actual:** Los escudos de los equipos (`logo_url`) apuntan a URLs aleatorias.
+**Crítica:** Si esas URLs externas se caen, los logos desaparecen.
+**Solución:** Crear un "Bucket" en Supabase Storage llamado `team-logos`. Permitir desde el panel de admin subir la imagen del escudo y guardar esa URL segura en la tabla `teams`.
 
-La automatización es el núcleo del valor que aportas.
-Al presionar "Finalizar Partido" (cambia `status` de `live` a `finished`):
-1. **Posiciones:** La vista SQL `standings` recalculará instantáneamente puntos, goles y diferencia de goles.
-2. **Goleadores:** La tabla pública de goleadores sumará los goles cargados.
-3. **Sanciones:** Se actualizará un contador de tarjetas rojas/amarillas por jugador para la fase de Playoffs.
-4. **Realtime:** Supabase emitirá un evento que actualizará las pantallas de cualquier espectador que esté viendo la página pública (sin que tengan que recargar).
+### D. Rendimiento y "Vibraciones" en Mobile
+**Estado Actual:** En dispositivos móviles, especialmente iOS (Safari), el comportamiento del "Pull to refresh" o el redimensionamiento automático de la barra de navegación del navegador causa "saltos" o vibraciones en layouts que usan `100vh`.
+**Solución:** Cambiar el uso de `100vh` por `100dvh` (Dynamic Viewport Height) y ajustar el `overscroll-behavior` en el CSS global para estabilizar la experiencia nativa.
 
----
-
-## 4. Identidad Visual y PWA (Estética Britos Berón)
-
-Mantendremos y elevaremos el esquema "Cyan Electric" actual, dándole un toque más premium, oscuro y minimalista.
-
-- **UI Mobile-First:** Elementos grandes, botones "Bottom Sheet" para los menús de selección (en lugar de dropdowns nativos que son incómodos en mobile).
-- **Glassmorphism:** Tarjetas translúcidas sobre fondos oscuros (Dark Mode nativo).
-- **PWA Config:**
-  - Optimizar `manifest.json` con íconos vectoriales y "theme_color" para que la barra del sistema operativo se mimetice con la App.
-  - Mejorar el Service Worker (`sw.js`) para cachear recursos estáticos y que la app abra instantáneamente desde el inicio de Android/iOS.
-  - Implementar un prompt automático de "Instalar App" para los delegados.
-
-## Plan de Ejecución
-
-1. **Fase 1 (Backend):** Modificar `supabase/schema.sql`, regenerar tipos y migrar la base de datos de desarrollo.
-2. **Fase 2 (Delegado):** Construir la interfaz de armado de formación con asignación de dorsales.
-3. **Fase 3 (Árbitro):** Construir el flujo de post-partido (Resultado, Goleadores, Tarjetas).
-4. **Fase 4 (PWA & Diseño):** Pulido visual (estilo Britos Berón) y configuración estricta de PWA.
+### E. Static Export vs Server Side Rendering (SSR)
+**Estado Actual:** Netlify está usando Static Export. Por eso tuvimos problemas con la ruta dinámica `/equipo/[id]` y la pasamos a query params (`/equipo?id=...`).
+**Crítica:** Para SEO y para compartir links específicos en WhatsApp (para que salga el escudo del equipo en la previsualización), los query params no son detectados por el bot de WhatsApp/Facebook.
+**Solución:** Mover el despliegue a **Vercel** o habilitar el modo "Next.js SSR" en Netlify (usando `@netlify/plugin-nextjs`). Esto permite renderizar rutas dinámicas en el servidor, devolviendo metadatos únicos por equipo y un ruteo mucho más limpio.
