@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 import SplashScreen from '@/components/SplashScreen'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://campeonatodelaestrella.vercel.app'),
   title: 'Campeonato de la Estrella',
   description: 'Seguimiento en vivo del torneo — Fixture, posiciones, goleadores y Fair Play. Predio Pintita, Mariano Acosta.',
   manifest: '/manifest.json',
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Campeonato de la Estrella ⚽',
     description: 'Seguí en vivo el torneo: fixture, posiciones, goleadores y Fair Play. Predio Pintita.',
-    url: 'https://campeonato-estrella.netlify.app',
+    url: 'https://campeonatodelaestrella.vercel.app',
     siteName: 'Campeonato de la Estrella',
     images: [
       {

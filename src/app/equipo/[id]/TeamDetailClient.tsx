@@ -1,50 +1,29 @@
 'use client'
-import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { getTeamById, getTeamMatches, getTopScorers } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 import type { Team, Match, TopScorer } from '@/lib/types'
 import TeamLogo from '@/components/TeamLogo'
 
-const TOURNAMENT_ID = '11111111-1111-1111-1111-111111111111'
-
-function TeamDetailContent() {
-  const searchParams = useSearchParams()
+export default function TeamDetailClient({ 
+  teamId, 
+  initialTeam, 
+  initialMatches, 
+  initialScorers 
+}: { 
+  teamId: string, 
+  initialTeam: Team | null, 
+  initialMatches: Match[], 
+  initialScorers: TopScorer[] 
+}) {
   const router = useRouter()
-  const teamId = searchParams.get('id') || ''
 
-  const [team, setTeam] = useState<Team | null>(null)
-  const [matches, setMatches] = useState<Match[]>([])
-  const [scorers, setScorers] = useState<TopScorer[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!teamId) return
-    Promise.all([
-      getTeamById(teamId),
-      getTeamMatches(teamId),
-      getTopScorers(TOURNAMENT_ID),
-    ]).then(([t, m, s]) => {
-      setTeam(t)
-      setMatches(m as Match[])
-      setScorers(s.filter(sc => sc.team_id === teamId))
-    }).finally(() => setLoading(false))
-  }, [teamId])
-
-  if (loading) return (
-    <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-      <div style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(0,240,255,0.15)', borderTopColor: '#00f0ff', animation: 'spin 0.8s linear infinite' }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </main>
-  )
-
-  if (!team) return (
-    <main style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', gap: 16 }}>
+  if (!initialTeam) return (
+    <main style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', gap: 16 }}>
       <p style={{ color: 'var(--ce-fg-4)', fontSize: 14 }}>Equipo no encontrado</p>
       <button onClick={() => router.back()} style={{ background: 'var(--ce-cyan)', color: '#000', border: 'none', padding: '10px 24px', borderRadius: 100, fontWeight: 900, fontSize: 13, cursor: 'pointer' }}>Volver</button>
     </main>
   )
 
-  const finished = matches.filter(m => m.status === 'finished')
+  const finished = initialMatches.filter(m => m.status === 'finished')
   const wins = finished.filter(m =>
     (m.home_team_id === teamId && m.home_score > m.away_score) ||
     (m.away_team_id === teamId && m.away_score > m.home_score)
@@ -72,11 +51,11 @@ function TeamDetailContent() {
 
       {/* Team card */}
       <div className="glass" style={{ margin: '16px 16px 0', borderRadius: 16, padding: '24px 20px', display: 'flex', alignItems: 'center', gap: 16, borderLeft: '3px solid var(--ce-cyan)' }}>
-        <TeamLogo url={team.logo_url} name={team.name} size={56} />
+        <TeamLogo url={initialTeam.logo_url} name={initialTeam.name} size={56} />
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: 20, fontWeight: 900, color: 'var(--ce-fg)', lineHeight: 1.1 }}>{team.name}</p>
+          <p style={{ margin: 0, fontSize: 20, fontWeight: 900, color: 'var(--ce-fg)', lineHeight: 1.1 }}>{initialTeam.name}</p>
           <p style={{ margin: '6px 0 0' }}>
-            <span style={{ fontSize: 10, fontWeight: 900, padding: '3px 8px', borderRadius: 6, background: 'rgba(0,240,255,.1)', color: 'var(--ce-cyan)', border: '1px solid rgba(0,240,255,.2)', letterSpacing: '.1em' }}>ZONA {team.zone}</span>
+            <span style={{ fontSize: 10, fontWeight: 900, padding: '3px 8px', borderRadius: 6, background: 'rgba(0,240,255,.1)', color: 'var(--ce-cyan)', border: '1px solid rgba(0,240,255,.2)', letterSpacing: '.1em' }}>ZONA {initialTeam.zone}</span>
           </p>
         </div>
       </div>
@@ -96,13 +75,13 @@ function TeamDetailContent() {
       </div>
 
       {/* Goleadores del equipo */}
-      {scorers.length > 0 && (
+      {initialScorers.length > 0 && (
         <div style={{ padding: '20px 16px 0' }}>
           <p style={{ margin: '0 0 10px', fontSize: 9, fontWeight: 800, letterSpacing: '.25em', textTransform: 'uppercase', color: 'var(--ce-cyan)' }}>
             Goleadores
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {scorers.map((s, i) => (
+            {initialScorers.map((s, i) => (
               <div key={s.player_id} className="glass" style={{ borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ fontSize: 14, fontWeight: 900, color: i === 0 ? 'var(--ce-cyan)' : 'var(--ce-fg-4)', width: 22, textAlign: 'center' }}>{i + 1}</span>
                 <p style={{ margin: 0, flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--ce-fg)' }}>{s.player_name}</p>
@@ -122,7 +101,7 @@ function TeamDetailContent() {
           Partidos ({finished.length} jugados)
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {matches.map(m => {
+          {initialMatches.map(m => {
             const isHome = m.home_team_id === teamId
             const isFinished = m.status === 'finished'
             const won = isFinished && (
@@ -175,17 +154,5 @@ function TeamDetailContent() {
         </div>
       </div>
     </main>
-  )
-}
-
-export default function TeamDetailPage() {
-  return (
-    <Suspense fallback={
-      <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <div style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(0,240,255,0.15)', borderTopColor: '#00f0ff', animation: 'spin 0.8s linear infinite' }} />
-      </main>
-    }>
-      <TeamDetailContent />
-    </Suspense>
   )
 }
