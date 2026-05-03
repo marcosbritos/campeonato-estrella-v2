@@ -1,4 +1,4 @@
-export type Zone = 'A' | 'B' | 'C'
+export type Zone = 'A' | 'B' | 'C' | 'P' | 'R' | 'F'
 export type CardType = 'yellow' | 'red'
 export type MatchStatus = 'pending' | 'live' | 'finished'
 

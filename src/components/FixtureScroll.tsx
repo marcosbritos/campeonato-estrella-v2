@@ -10,6 +10,20 @@ import { es } from 'date-fns/locale'
 const ZONES = ['Todos', 'A', 'B', 'C'] as const
 type ZoneFilter = (typeof ZONES)[number]
 
+function getRoundLabel(round: number): string {
+  if (round === 8) return 'Zona Campeonato'
+  if (round === 9) return 'Zona Repechaje'
+  if (round >= 10) return 'Amistosos'
+  return `Fecha ${round}`
+}
+
+function getMatchStageLabel(m: Match): string {
+  if (m.round === 8) return 'CUARTOS · CAMPEONATO'
+  if (m.round === 9) return 'CUARTOS · REPECHAJE'
+  if (m.round >= 10) return 'AMISTOSO'
+  return `ZONA ${m.zone} · F${m.round}`
+}
+
 function MatchCard({ match: m, index }: { match: Match; index: number }) {
   const isLive = m.status === 'live'
   const isFinished = m.status === 'finished'
@@ -25,7 +39,7 @@ function MatchCard({ match: m, index }: { match: Match; index: number }) {
     }}>
       {isLive && <div style={{ height: 2, background: 'linear-gradient(90deg,var(--ce-cyan-3),var(--ce-cyan),var(--ce-loss))' }} />}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', borderBottom: '1px solid var(--ce-divider)', background: 'rgba(0,0,0,.05)' }}>
-        <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '.2em', color: 'var(--ce-fg-4)', textTransform: 'uppercase' }}>ZONA {m.zone} · F{m.round}</span>
+        <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '.2em', color: 'var(--ce-fg-4)', textTransform: 'uppercase' }}>{getMatchStageLabel(m)}</span>
         {isLive
           ? <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, fontWeight: 900, color: 'var(--ce-loss)', textTransform: 'uppercase' }}><span className="live-dot" style={{ width: 6, height: 6 }} />EN VIVO</span>
           : isFinished
@@ -82,9 +96,13 @@ export default function FixtureScroll() {
       
       setActiveRound(current => {
         if (current !== null && r.includes(current)) return current
-        
-        // Find latest round with finished matches
-        const latestFinished = r.slice().reverse().find(rnd => 
+
+        // If playoffs exist, default to Zona Campeonato (round 8)
+        const hasPlayoffs = r.some(rnd => rnd >= 8)
+        if (hasPlayoffs) return r.find(rnd => rnd >= 8) ?? r[0]
+
+        // Otherwise show latest round with finished matches
+        const latestFinished = r.slice().reverse().find(rnd =>
           g[rnd].some(m => m.status === 'finished')
         )
         return latestFinished ?? r[0]
@@ -99,10 +117,10 @@ export default function FixtureScroll() {
 
   return (
     <div>
-      {/* Zone filter pills */}
+      {/* Zone filter pills — hidden during playoffs */}
       <div
         className="no-scrollbar"
-        style={{ display: 'flex', gap: 8, padding: '12px 16px', overflowX: 'auto', borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+        style={{ display: activeRound !== null && activeRound >= 8 ? 'none' : 'flex', gap: 8, padding: '12px 16px', overflowX: 'auto', borderBottom: '1px solid rgba(255,255,255,0.04)' }}
       >
         {ZONES.map((z) => {
           const active = zone === z
@@ -144,7 +162,7 @@ export default function FixtureScroll() {
             return (
               <button
                 key={r}
-                onClick={() => setActiveRound(r)}
+                onClick={() => { if (r >= 8 && zone !== 'Todos') setZone('Todos'); setActiveRound(r) }}
                 style={{
                   flexShrink: 0, padding: '6px 16px', borderRadius: 100,
                   border: 'none', cursor: 'pointer',
@@ -161,7 +179,7 @@ export default function FixtureScroll() {
                   }),
                 }}
               >
-                FECHA {r}
+                {getRoundLabel(r).toUpperCase()}
               </button>
             )
           })}
@@ -194,7 +212,7 @@ export default function FixtureScroll() {
                 color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase',
                 fontFamily: 'var(--font-bebas, system-ui)',
               }}>
-                FECHA {activeRound}
+                {getRoundLabel(activeRound).toUpperCase()}
               </span>
               <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.05)' }} />
             </div>
