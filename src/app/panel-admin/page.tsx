@@ -830,6 +830,23 @@ export default function PanelAdminPage() {
           >
             ← Editar planilla de jugadores
           </button>
+          {isLive && (
+            <button
+              onClick={async () => {
+                if (!confirm('¿Volver el partido a PENDIENTE? Se borrará el estado en vivo.')) return
+                setLoading(true)
+                await updateMatchStatus(activeMatch.id, 'pending', 0, 0)
+                setState('dashboard')
+                loadMatches()
+                setLoading(false)
+              }}
+              disabled={loading}
+              className="adm-btn adm-btn-ghost"
+              style={{ width: '100%', fontSize: 11, padding: '10px 0', marginTop: 4, color: 'var(--afg3)' }}
+            >
+              Anular inicio · volver a pendiente
+            </button>
+          )}
         </div>
       </div>
     )
