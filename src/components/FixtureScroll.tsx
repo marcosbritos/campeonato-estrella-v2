@@ -179,7 +179,12 @@ export default function FixtureScroll() {
                   }),
                 }}
               >
-                {getRoundLabel(r).toUpperCase()}
+                {r >= 8 ? (
+                  <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.25, gap: 0 }}>
+                    <span style={{ fontSize: 10 }}>{r === 10 ? 'AMISTOSOS' : 'ZONA'}</span>
+                    {r !== 10 && <span style={{ fontSize: 11 }}>{r === 8 ? 'CAMPEONATO' : 'REPECHAJE'}</span>}
+                  </span>
+                ) : getRoundLabel(r).toUpperCase()}
               </button>
             )
           })}

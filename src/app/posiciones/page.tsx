@@ -9,6 +9,20 @@ import Link from 'next/link'
 
 const TOURNAMENT_ID = '11111111-1111-1111-1111-111111111111'
 const ZONES: Zone[] = ['A', 'B', 'C']
+
+function getRoundLabel(round: number): string {
+  if (round === 8) return 'Zona Campeonato'
+  if (round === 9) return 'Zona Repechaje'
+  if (round >= 10) return 'Amistosos'
+  return `Fecha ${round}`
+}
+
+function getMatchStageLabel(m: Match): string {
+  if (m.round === 8) return 'CUARTOS · CAMPEONATO'
+  if (m.round === 9) return 'CUARTOS · REPECHAJE'
+  if (m.round >= 10) return 'AMISTOSO'
+  return `ZONA ${m.zone} · F${m.round}`
+}
 const MEDAL_COLOR = ['#5ffbff', '#00f0ff', '#00b8cc']
 
 /* ─── STANDINGS ROW ─── */
@@ -70,12 +84,12 @@ function MatchRow({ m }: { m: Match }) {
     }}>
       {isLive && <div style={{ height: 2, background: 'linear-gradient(90deg,var(--ce-cyan-3),var(--ce-cyan),var(--ce-loss))' }} />}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', borderBottom: '1px solid var(--ce-divider)', background: 'rgba(0,0,0,.2)' }}>
-        <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '.2em', color: 'var(--ce-fg-4)', textTransform: 'uppercase' }}>F{m.round}</span>
+        <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '.2em', color: 'var(--ce-fg-4)', textTransform: 'uppercase' }}>{getMatchStageLabel(m)}</span>
         {isLive
           ? <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, fontWeight: 900, color: 'var(--ce-loss)', textTransform: 'uppercase' }}><span className="live-dot" style={{ width: 6, height: 6 }} />EN VIVO</span>
           : isFinished
             ? <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--ce-fg-4)' }}>Finalizado</span>
-            : <span style={{ fontSize: 9, fontWeight: 800, color: 'rgba(0,240,255,.7)', textTransform: 'uppercase' }}>{dateLabel}</span>
+            : <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--ce-fg-4)', textTransform: 'uppercase' }}>{dateLabel}</span>
         }
       </div>
       <div style={{ display: 'flex', alignItems: 'center', padding: '12px 12px' }}>
@@ -238,7 +252,12 @@ export default function PosicionesPage() {
                       whiteSpace: 'nowrap',
                     }}>
                       {hasLive && !active && <span style={{ marginRight: 4 }}>●</span>}
-                      F{r}
+                      {r >= 8 ? (
+                        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.25 }}>
+                          <span style={{ fontSize: 9 }}>{r === 10 ? 'AMISTOSOS' : 'ZONA'}</span>
+                          {r !== 10 && <span style={{ fontSize: 10 }}>{r === 8 ? 'CAMPEONATO' : 'REPECHAJE'}</span>}
+                        </span>
+                      ) : getRoundLabel(r).toUpperCase()}
                     </button>
                   )
                 })}
