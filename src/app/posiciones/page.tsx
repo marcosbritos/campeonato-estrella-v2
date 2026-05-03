@@ -123,7 +123,7 @@ export default function PosicionesPage() {
     setLoadingZone(true)
     const [st, mt] = await Promise.all([getStandings(TOURNAMENT_ID, z), getMatches(TOURNAMENT_ID, z)])
     setZoneStandings(st)
-    const matches = mt as Match[]
+    const matches = (mt as Match[]).filter(m => m.round < 8)
     setZoneMatches(matches)
     // default to last round with live/pending, else last round
     const rounds = Array.from(new Set(matches.map(m => m.round))).sort((a, b) => a - b)

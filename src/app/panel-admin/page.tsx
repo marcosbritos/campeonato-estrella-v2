@@ -8,6 +8,7 @@ import {
   getMatchRoster,
   upsertMatchRoster,
   updateMatchStatus,
+  updateMatchPhoto,
   addGoal,
   addCard,
   removeGoal,
@@ -98,6 +99,8 @@ export default function PanelAdminPage() {
   const [homeScore, setHomeScore] = useState(0)
   const [awayScore, setAwayScore] = useState(0)
   const [actionModal, setActionModal] = useState<{ type: 'goal' | 'yellow' | 'red'; teamId: string } | null>(null)
+  const [sheetPhotoPreview, setSheetPhotoPreview] = useState<string | null>(null)
+  const [sheetPhotoUploading, setSheetPhotoUploading] = useState(false)
 
   const themeClass = `adm-root ${theme === 'dark' ? 'adm-dark' : 'adm-light'}`
 
@@ -160,6 +163,7 @@ export default function PanelAdminPage() {
       setHomeScore(m.home_score)
       setAwayScore(m.away_score)
       setObservations(m.observations || '')
+      setSheetPhotoPreview(m.sheet_photo_url || null)
       setGoals(goalsRes.data || [])
       setCards(cardsRes.data || [])
       setHomeRoster(hr.map(r => ({ player_id: r.player_id, shirt_number: r.shirt_number.toString(), roster_id: r.id } as any)))
@@ -195,6 +199,12 @@ export default function PanelAdminPage() {
         else setAwayScore(s => s + 1)
       } else {
         await addCard(activeMatch.id, actionModal.teamId, null, rosterId || null, actionModal.type, minute ? parseInt(minute) : null)
+        if (actionModal.type === 'yellow' && rosterId) {
+          const alreadyHasYellow = cards.some(c => c.card_type === 'yellow' && c.roster_id === rosterId)
+          if (alreadyHasYellow) {
+            await addCard(activeMatch.id, actionModal.teamId, null, rosterId, 'red', minute ? parseInt(minute) : null)
+          }
+        }
       }
       const [goalsRes, cardsRes] = await Promise.all([
         supabase.from('goals').select('*, roster:match_rosters(*, player:players(*))').eq('match_id', activeMatch.id),
@@ -216,6 +226,26 @@ export default function PanelAdminPage() {
     setState('dashboard')
     loadMatches()
     setLoading(false)
+  }
+
+  async function handlePhotoUpload(file: File) {
+    if (!activeMatch) return
+    setSheetPhotoUploading(true)
+    setSheetPhotoPreview(URL.createObjectURL(file))
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('matchId', activeMatch.id)
+      const res = await fetch('/api/upload-sheet', { method: 'POST', body: form })
+      if (res.ok) {
+        const { url } = await res.json()
+        setSheetPhotoPreview(url)
+      }
+    } catch {
+      // keep local preview
+    } finally {
+      setSheetPhotoUploading(false)
+    }
   }
 
   // ─── COMMON HEADER ────────────────────────────────────────────────────────
@@ -660,39 +690,57 @@ export default function PanelAdminPage() {
           ))}
 
           {/* Events log */}
-          {(goals.length > 0 || cards.length > 0) && (
-            <div className="adm-card" style={{ padding: '12px 12px' }}>
-              <p style={{ margin: '0 0 10px', fontSize: 10, fontWeight: 900, color: 'var(--aaccent)', letterSpacing: '.15em', textTransform: 'uppercase' }}>
-                Eventos ({goals.length + cards.length})
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {goals.map(g => (
-                  <div key={g.id} className="adm-card2" style={{ display: 'flex', alignItems: 'center', padding: '10px 12px', gap: 10 }}>
-                    <span style={{ fontSize: 18 }}>⚽</span>
-                    <div style={{ flex: 1 }}>
-                      <span style={{ fontSize: 13, fontWeight: 900, color: 'var(--afg)' }}>{(g.roster?.player as any)?.last_name || 'Desconocido'}</span>
-                      {g.minute && <span style={{ fontSize: 11, color: 'var(--afg3)', marginLeft: 6 }}>{g.minute}'</span>}
+          {(goals.length > 0 || cards.length > 0) && (() => {
+            // Detect 2nd-yellow cards (trigger auto-red) and skip the generated red rows
+            const sortedCards = [...cards].sort((a, b) => (a.minute ?? 0) - (b.minute ?? 0))
+            const secondYellowIds = new Set<string>()
+            const autoRedRosterIds = new Set<string>()
+            const tmpCount: Record<string, number> = {}
+            for (const c of sortedCards) {
+              if (c.card_type === 'yellow' && c.roster_id) {
+                tmpCount[c.roster_id] = (tmpCount[c.roster_id] || 0) + 1
+                if (tmpCount[c.roster_id] === 2) { secondYellowIds.add(c.id); autoRedRosterIds.add(c.roster_id) }
+              }
+            }
+            return (
+              <div className="adm-card" style={{ padding: '12px 12px' }}>
+                <p style={{ margin: '0 0 10px', fontSize: 10, fontWeight: 900, color: 'var(--aaccent)', letterSpacing: '.15em', textTransform: 'uppercase' }}>
+                  Eventos ({goals.length + cards.length})
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {goals.map(g => (
+                    <div key={g.id} className="adm-card2" style={{ display: 'flex', alignItems: 'center', padding: '10px 12px', gap: 10 }}>
+                      <span style={{ fontSize: 18 }}>⚽</span>
+                      <div style={{ flex: 1 }}>
+                        <span style={{ fontSize: 13, fontWeight: 900, color: 'var(--afg)' }}>{(g.roster?.player as any)?.last_name || 'Desconocido'}</span>
+                        {g.minute && <span style={{ fontSize: 11, color: 'var(--afg3)', marginLeft: 6 }}>{g.minute}'</span>}
+                      </div>
+                      {isLive && (
+                        <button onClick={async () => { await removeGoal(g.id); setGoals(gs => gs.filter(x => x.id !== g.id)); if (g.team_id === activeMatch.home_team_id) setHomeScore(s => s - 1); else setAwayScore(s => s - 1) }} style={{ background: 'none', border: 'none', color: 'var(--alive)', fontSize: 18, cursor: 'pointer', padding: 4 }}>✕</button>
+                      )}
                     </div>
-                    {isLive && (
-                      <button onClick={async () => { await removeGoal(g.id); setGoals(gs => gs.filter(x => x.id !== g.id)); if (g.team_id === activeMatch.home_team_id) setHomeScore(s => s - 1); else setAwayScore(s => s - 1) }} style={{ background: 'none', border: 'none', color: 'var(--alive)', fontSize: 18, cursor: 'pointer', padding: 4 }}>✕</button>
-                    )}
-                  </div>
-                ))}
-                {cards.map(c => (
-                  <div key={c.id} className="adm-card2" style={{ display: 'flex', alignItems: 'center', padding: '10px 12px', gap: 10 }}>
-                    <span style={{ fontSize: 18 }}>{c.card_type === 'yellow' ? '🟨' : '🟥'}</span>
-                    <div style={{ flex: 1 }}>
-                      <span style={{ fontSize: 13, fontWeight: 900, color: 'var(--afg)' }}>{(c.roster?.player as any)?.last_name || 'Desconocido'}</span>
-                      {c.minute && <span style={{ fontSize: 11, color: 'var(--afg3)', marginLeft: 6 }}>{c.minute}'</span>}
-                    </div>
-                    {isLive && (
-                      <button onClick={async () => { await removeCard(c.id); setCards(cs => cs.filter(x => x.id !== c.id)) }} style={{ background: 'none', border: 'none', color: 'var(--alive)', fontSize: 18, cursor: 'pointer', padding: 4 }}>✕</button>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                  {sortedCards.map(c => {
+                    if (c.card_type === 'red' && c.roster_id && autoRedRosterIds.has(c.roster_id)) return null
+                    const isSecondYellow = secondYellowIds.has(c.id)
+                    return (
+                      <div key={c.id} className="adm-card2" style={{ display: 'flex', alignItems: 'center', padding: '10px 12px', gap: 10 }}>
+                        <span style={{ fontSize: 18, letterSpacing: -2 }}>{isSecondYellow ? '🟨🟥' : c.card_type === 'yellow' ? '🟨' : '🟥'}</span>
+                        <div style={{ flex: 1 }}>
+                          <span style={{ fontSize: 13, fontWeight: 900, color: 'var(--afg)' }}>{(c.roster?.player as any)?.last_name || 'Desconocido'}</span>
+                          {isSecondYellow && <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--alive)', marginLeft: 6, letterSpacing: '.1em' }}>DOBLE AMARILLA</span>}
+                          {c.minute && <span style={{ fontSize: 11, color: 'var(--afg3)', marginLeft: 6 }}>{c.minute}'</span>}
+                        </div>
+                        {isLive && (
+                          <button onClick={async () => { await removeCard(c.id); setCards(cs => cs.filter(x => x.id !== c.id)) }} style={{ background: 'none', border: 'none', color: 'var(--alive)', fontSize: 18, cursor: 'pointer', padding: 4 }}>✕</button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* Observations */}
           <div className="adm-card" style={{ padding: '12px 12px' }}>
@@ -705,6 +753,27 @@ export default function PanelAdminPage() {
               className="adm-input"
               style={{ width: '100%', minHeight: 90, fontSize: 13, fontWeight: 600, padding: '12px', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.5, opacity: isLive ? 1 : .6 }}
             />
+          </div>
+
+          {/* Sheet photo */}
+          <div className="adm-card" style={{ padding: '12px 12px' }}>
+            <p style={{ margin: '0 0 10px', fontSize: 10, fontWeight: 900, color: 'var(--afg3)', letterSpacing: '.15em', textTransform: 'uppercase' }}>Planilla manual · Foto de respaldo</p>
+            {sheetPhotoPreview ? (
+              <div>
+                <img src={sheetPhotoPreview} alt="Planilla" style={{ width: '100%', borderRadius: 8, marginBottom: 10 }} />
+                <label style={{ display: 'flex', justifyContent: 'center', cursor: 'pointer' }}>
+                  <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--aaccent)', letterSpacing: '.1em', textTransform: 'uppercase' }}>CAMBIAR FOTO</span>
+                  <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handlePhotoUpload(e.target.files[0])} />
+                </label>
+              </div>
+            ) : (
+              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '24px 0', cursor: 'pointer', border: '2px dashed var(--aborder)', borderRadius: 10, opacity: sheetPhotoUploading ? .6 : 1 }}>
+                <span style={{ fontSize: 36 }}>📷</span>
+                <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--aaccent)', textTransform: 'uppercase', letterSpacing: '.1em' }}>{sheetPhotoUploading ? 'Subiendo...' : 'Fotografiar planilla'}</span>
+                <span style={{ fontSize: 10, color: 'var(--afg3)' }}>Foto firmada por el árbitro · Respaldo digital</span>
+                <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handlePhotoUpload(e.target.files[0])} disabled={sheetPhotoUploading} />
+              </label>
+            )}
           </div>
         </div>
 

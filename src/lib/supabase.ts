@@ -75,6 +75,10 @@ export async function updateMatchStatus(
   if (error) throw error
 }
 
+export async function updateMatchPhoto(matchId: string, sheetPhotoUrl: string) {
+  await supabase.from('matches').update({ sheet_photo_url: sheetPhotoUrl }).eq('id', matchId)
+}
+
 // --- Rosters ---
 export async function getMatchRoster(matchId: string, teamId: string): Promise<MatchRoster[]> {
   const { data, error } = await supabase

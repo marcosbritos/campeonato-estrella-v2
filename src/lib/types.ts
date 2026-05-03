@@ -50,6 +50,7 @@ export interface Match {
   away_score: number
   status: MatchStatus
   observations?: string | null
+  sheet_photo_url?: string | null
   created_at?: string
   home_team?: Team
   away_team?: Team
