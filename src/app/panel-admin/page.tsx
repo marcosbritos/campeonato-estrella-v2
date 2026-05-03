@@ -8,7 +8,6 @@ import {
   getMatchRoster,
   upsertMatchRoster,
   updateMatchStatus,
-  updateMatchPhoto,
   addGoal,
   addCard,
   removeGoal,
@@ -228,13 +227,39 @@ export default function PanelAdminPage() {
     setLoading(false)
   }
 
+  async function compressImage(file: File): Promise<File> {
+    return new Promise((resolve) => {
+      const img = new Image()
+      const objUrl = URL.createObjectURL(file)
+      img.onload = () => {
+        const maxW = 1200
+        const scale = Math.min(1, maxW / img.width)
+        const w = Math.round(img.width * scale)
+        const h = Math.round(img.height * scale)
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+        URL.revokeObjectURL(objUrl)
+        canvas.toBlob(
+          blob => resolve(blob ? new File([blob], 'sheet.webp', { type: 'image/webp' }) : file),
+          'image/webp', 0.85
+        )
+      }
+      img.onerror = () => { URL.revokeObjectURL(objUrl); resolve(file) }
+      img.src = objUrl
+    })
+  }
+
   async function handlePhotoUpload(file: File) {
     if (!activeMatch) return
     setSheetPhotoUploading(true)
     setSheetPhotoPreview(URL.createObjectURL(file))
     try {
+      const compressed = await compressImage(file)
+      setSheetPhotoPreview(URL.createObjectURL(compressed))
       const form = new FormData()
-      form.append('file', file)
+      form.append('file', compressed)
       form.append('matchId', activeMatch.id)
       const res = await fetch('/api/upload-sheet', { method: 'POST', body: form })
       if (res.ok) {
@@ -798,6 +823,13 @@ export default function PanelAdminPage() {
               {loading ? 'CARGANDO...' : 'REABRIR PARTIDO'}
             </button>
           )}
+          <button
+            onClick={() => setState('pre-match')}
+            className="adm-btn adm-btn-ghost"
+            style={{ width: '100%', fontSize: 13, padding: '12px 0', marginTop: 8 }}
+          >
+            ← Editar planilla de jugadores
+          </button>
         </div>
       </div>
     )
